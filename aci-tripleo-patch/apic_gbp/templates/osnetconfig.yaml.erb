@@ -1,0 +1,12 @@
+network_config:
+  -
+    type: vlan
+    device: <%= @opflex_uplink_iface %>
+    vlan_id: <%= @opflex_uplink_vlan %>
+    use_dhcp: true
+    mtu: 1600
+    routes:
+      -
+        ip_netmask: 224.0.0.0/4
+        next_hop: 0.0.0.0
+        default: false

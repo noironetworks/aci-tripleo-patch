@@ -1,0 +1,8 @@
+DEVICE=<%= @patch_port_from %>
+ONBOOT=yes
+HOTPLUG=no
+NM_CONTROLLED=no
+DEVICETYPE=ovs
+TYPE=OVSPatchPort
+OVS_PATCH_PEER=<%= @patch_port_to %>
+OVS_BRIDGE=<%= @source_bridge %>

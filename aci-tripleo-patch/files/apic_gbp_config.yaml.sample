@@ -1,0 +1,21 @@
+# A Heat environment file which can be used to enable a
+# a Cisco Apic GBP/ML2, configured via puppet
+resource_registry:
+    OS::TripleO::ControllerExtraConfigPre: /opt/aci-tripleo-patch/puppet/cisco-apic.yaml
+    OS::TripleO::ComputeExtraConfigPre: /opt/aci-tripleo-patch/puppet/cisco-apic.yaml
+
+parameter_defaults:
+  ACIApicIp: '10.30.120.140'
+  ACIApicUser: 'admin'
+  ACIApicPassword: 'noir0123'
+  ACIApicInfraVlan: 4093
+  ACIOpflexPeerIp: '10.0.0.30'
+  ACIOpflexRemoteIp: '10.0.0.32'
+  ACIOpflexOVSBridge: 'br-int'
+  ACIOpflexUplinkInterface: 'nic2'
+  ACIOpenstackDomainName: 'ostack1'
+  ACIApicEntityProfile: 'f-aep'
+  ACIOpflexEncapType: 'vlan'
+  ACIUseLLDPDiscovery: 'true'
+  ACIOpflexOptimizedMetadata: 'true'
+  ACIOpflexMechanism: 'cisco_apic_ml2'

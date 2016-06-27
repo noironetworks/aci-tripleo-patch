@@ -1,0 +1,127 @@
+heat_template_version: 2015-04-30
+
+description: Configure hieradata for Cisco Apic configuration
+
+parameters:
+  server:
+    description: ID of the controller node to apply this config to
+    type: string
+
+  # Config specific parameters, to be provided via parameter_defaults
+  ACIApicIp:
+    type: string
+    default: '192.0.0.2'
+  ACIApicUser:
+    type: string
+    default: 'admin'
+  ACIApicPassword:
+    type: string
+    default: 'password'
+  ACIApicInfraVlan:
+    type: number
+    default: 4093
+  ACIApicEntityProfile:
+    type: string
+    default: 'openstack-aep'
+  ACIOpflexPeerIp:
+    type: string
+    default: '10.0.0.30'
+  ACIOpflexRemoteIp:
+    type: string
+    default: '10.0.0.32'
+  ACIOpflexOVSBridge:
+    type: string
+    default: 'br-int'
+  ACIOpflexUplinkInterface:
+    type: string
+    default: 'nic1'
+  ACIOpflexBridgeToPatch:
+    type: string
+    default: 'br-ex'
+  ACIOpenstackDomainName:
+    type: string
+    default: 'openstack1'
+  ACIUseLLDPDiscovery:
+    type: boolean
+    default: true
+  ACIOpflexEncapType:
+    type: string
+    default: 'vxlan'  
+  ACIOpflexOptimizedMetadata:
+    type: boolean
+    default: false
+  NeutronPassword:
+    default: unset
+    description: The password for the neutron service and db account, used by neutron agents.
+    type: string
+    hidden: true
+  ACIOpflexMechanism:
+    type: string
+    default: 'cisco_apic_ml2'
+    description: Neutron mechanism to use, either cisco_apic_ml2 or apic_gbp
+    constraints:
+      - allowed_values: ['cisco_apic_ml2', 'apic_gbp']
+
+resources:
+
+  CiscoApicOpenstackConfig:
+    type: OS::Heat::StructuredConfig
+    properties:
+      group: os-apply-config
+      config:
+        hiera:
+          datafiles:
+            cisco_apic_data:
+              raw_data: {get_file: /usr/share/openstack-tripleo-heat-templates/puppet/hieradata/controller.yaml}
+              mapped_data:
+                apic_gbp::opflex_agent::opflex_peer_ip: {get_input: opflex_peer_ip}
+                apic_gbp::opflex_agent::opflex_remote_ip: {get_input: opflex_remote_ip}
+                apic_gbp::opflex_agent::opflex_ovs_bridge: {get_input: opflex_ovs_bridge}
+                apic_gbp::opflex_agent::opflex_apic_domain_name: {get_input: apic_domain_name}
+                apic_gbp::opflex_agent::opflex_uplink_iface: {get_input: opflex_uplink_iface}
+                apic_gbp::opflex_agent::opflex_uplink_vlan: {get_input: opflex_uplink_vlan}
+                apic_gbp::opflex_agent::opflex_encap_type: {get_input: opflex_encap_type}
+                apic_gbp::opflex_agent::opflex_target_bridge_to_patch: {get_input: opflex_target_bridge_to_patch}
+                apic_gbp::compute::optimized_metadata: {get_input: optimized_neutron_metadata}
+                neutron::plugins::ml2::cisco::apic_ml2::apic_hosts: {get_input: apic_hosts}
+                neutron::plugins::ml2::cisco::apic_ml2::apic_username: {get_input: apic_username}
+                neutron::plugins::ml2::cisco::apic_ml2::apic_password: {get_input: apic_password}
+                neutron::plugins::ml2::cisco::apic_ml2::apic_domain_name: {get_input: apic_domain_name}
+                neutron::plugins::ml2::cisco::apic_ml2::use_lldp_discovery: {get_input: lldp_discovery}
+                neutron::plugins::ml2::cisco::apic_ml2::apic_entity_profile: {get_input: apic_aep}
+                neutron::agents::metadata::auth_password: {get_input: neutron_password}
+                cisco::apic::opflex::neutron_mechanism: {get_input: opflex_neutron_mechanism}
+                neutron::plugins::apic_gbp::apic_hosts: {get_input: apic_hosts}
+                neutron::plugins::apic_gbp::apic_username: {get_input: apic_username}
+                neutron::plugins::apic_gbp::apic_password: {get_input: apic_password}
+                neutron::plugins::apic_gbp::apic_domain_name: {get_input: apic_domain_name}
+                neutron::plugins::apic_gbp::use_lldp_discovery: {get_input: lldp_discovery}
+                neutron::plugins::apic_gbp::apic_entity_profile: {get_input: apic_aep}
+                #neutron::agents::metadata::metadata_ip: {get_input: neutron_api_network}
+  CiscoApicOpenstackDeployment:
+    type: OS::Heat::StructuredDeployment
+    properties:
+      config: {get_resource: CiscoApicOpenstackConfig}
+      server: {get_param: server}
+      input_values:
+        opflex_peer_ip: {get_param: ACIOpflexPeerIp}
+        opflex_remote_ip: {get_param: ACIOpflexRemoteIp}
+        opflex_ovs_bridge: {get_param: ACIOpflexOVSBridge}
+        apic_domain_name: {get_param: ACIOpenstackDomainName}
+        opflex_uplink_iface: {get_param: ACIOpflexUplinkInterface}
+        opflex_uplink_vlan: {get_param: ACIApicInfraVlan}
+        opflex_encap_type: {get_param: ACIOpflexEncapType}
+        opflex_target_bridge_to_patch: {get_param: ACIOpflexBridgeToPatch}
+        apic_hosts: {get_param: ACIApicIp}
+        apic_username: {get_param: ACIApicUser}
+        apic_password: {get_param: ACIApicPassword}
+        lldp_discovery: {get_param: ACIUseLLDPDiscovery}
+        apic_aep: {get_param: ACIApicEntityProfile}
+        optimized_neutron_metadata: {get_param: ACIOpflexOptimizedMetadata}
+        neutron_password: {get_param: NeutronPassword}
+        opflex_neutron_mechanism: {get_param: ACIOpflexMechanism}
+        #neutron_api_network: {get_attr: [NetIpMap, net_ip_map, {get_param: [ServiceNetMap, NeutronApiNetwork]}]}
+outputs:
+  deploy_stdout:
+    description: Deployment reference, used to trigger puppet apply on changes
+    value: {get_attr: [CiscoApicOpenstackDeployment, deploy_stdout]}

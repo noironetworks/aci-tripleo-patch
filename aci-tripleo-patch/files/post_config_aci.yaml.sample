@@ -1,0 +1,4 @@
+resource_registry:
+    OS::TripleO::NodeExtraConfigPost: /opt/aci-tripleo-patch/puppet/apic_puppet.yaml
+parameter_defaults:
+  ConfigDebug: True
