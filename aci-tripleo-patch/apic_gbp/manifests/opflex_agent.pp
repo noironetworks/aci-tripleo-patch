@@ -5,7 +5,7 @@ class apic_gbp::opflex_agent(
   $opflex_apic_domain_name = '',
   $opflex_uplink_iface = '',
   $opflex_uplink_vlan = '4093',
-  $opflex_encap_type = 'vxlan',
+  $opflex_encap_mode = 'vxlan',
   $opflex_log_level = 'debug2',
   $opflex_peer_port = '8009',
   $opflex_ssl_mode = 'enabled',
@@ -57,14 +57,16 @@ class apic_gbp::opflex_agent(
       ensure => installed,
    }
 
-   service {'neutron-opflex-agent':
-      ensure => 'running',
-      enable => 'true',
-      #require => [Package['neutron-opflex-agent'], Service['neutron-openvswitch-agent']],
-      require => [Package['neutron-opflex-agent']];
+   if ! defined(Service["neutron-opflex-agent"]) {
+     service {'neutron-opflex-agent':
+        ensure => 'running',
+        enable => 'true',
+        #require => [Package['neutron-opflex-agent'], Service['neutron-openvswitch-agent']],
+        require => [Package['neutron-opflex-agent']];
+     }
    }
    
-   if ($opflex_encap_type == 'vxlan') {
+   if ($opflex_encap_mode == 'vxlan') {
      file {'agent-conf':
        path => '/etc/opflex-agent-ovs/conf.d/opflex-agent-ovs.conf',
        mode => '0644',
@@ -73,7 +75,7 @@ class apic_gbp::opflex_agent(
        notify => Service['agent-ovs'],
      }
    }
-   elsif ($opflex_encap_type == 'vlan') {
+   elsif ($opflex_encap_mode == 'vlan') {
      $v_opflex_encap_iface = "${opflex_ovs_bridge}_to_${opflex_target_bridge_to_patch}"
      if $opflex_target_bridge_to_patch {
        setup_ovs_patch_port{ 'source':

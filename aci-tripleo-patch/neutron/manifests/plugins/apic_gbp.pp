@@ -72,12 +72,13 @@
 # enable_vif_type_n1kv = False
 #
 class neutron::plugins::apic_gbp (
-  $apic_domain_name,
+  $apic_system_id,
   $node_role,
   $vni_ranges               = '100:1000',
   $apic_hosts               = '192.168.0.1',
   $apic_username            = 'admin',
   $apic_password            = 'password',
+  $encap_mode               = 'vxlan',
   $apic_entity_profile      = 'openstack_aep',
   $apic_provision_infra     = false,
   $apic_provision_hostlinks = false,
@@ -176,17 +177,18 @@ class neutron::plugins::apic_gbp (
 
   neutron_config {
     'DEFAULT/service_plugins':                     value => 'group_policy,apic_gbp_l3';
+    'DEFAULT/apic_system_id':                      value => $apic_system_id;
   }
 
   neutron_plugin_ml2 {
     'ml2/mechanism_drivers':                        value => 'apic_gbp';
     'ml2/tenant_network_types':                     value => 'opflex';
     'ml2/type_drivers':                             value => 'opflex,vlan,vxlan';
-    'ml2_cisco_apic/apic_domain_name':              value => $apic_domain_name;
     'ml2_cisco_apic/vni_ranges':                    value => $vni_ranges;
     'ml2_cisco_apic/apic_hosts':                    value => $apic_hosts;
     'ml2_cisco_apic/apic_username':                 value => $apic_username;
     'ml2_cisco_apic/apic_password':                 value => $apic_password;
+    'ml2_cisco_apic/encap_mode':                    value => $encap_mode;
     'ml2_cisco_apic/apic_entity_profile':           value => $apic_entity_profile;
     'ml2_cisco_apic/apic_provision_infra':          value => $apic_provision_infra;
     'ml2_cisco_apic/apic_provision_hostlinks':      value => $apic_provision_hostlinks;

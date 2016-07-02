@@ -15,17 +15,9 @@ include ::neutron::params
 
 $opflex_mechanism = hiera('cisco::apic::opflex::neutron_mechanism')
 
-if $role == "compute" {
-  service { 'neutron-ovs-agent-service':
-    ensure  => 'stopped',
-    name    => $::neutron::params::ovs_agent_service,
-    enable  => false,
-  }
-}
-
 if $opflex_mechanism == "cisco_apic_ml2" {
    class { 'neutron::plugins::ml2::cisco::apic_ml2':
-     apic_domain_name => hiera('neutron::plugins::ml2::cisco::apic_ml2::apic_domain_name'),
+     apic_system_id => hiera('neutron::plugins::ml2::cisco::apic_ml2::apic_system_id'),
      node_role => $role,
      sync_db => $sync_db,
    } ->
@@ -48,7 +40,7 @@ if $opflex_mechanism == "cisco_apic_ml2" {
 
 if $opflex_mechanism == "apic_gbp" {
    class { 'neutron::plugins::apic_gbp':
-     apic_domain_name => hiera('neutron::plugins::ml2::cisco::apic_ml2::apic_domain_name'),
+     apic_system_id => hiera('neutron::plugins::ml2::cisco::apic_ml2::apic_system_id'),
      node_role => $role,
      sync_db => $sync_db,
    } ->

@@ -1,8 +1,20 @@
 class apic_gbp::compute(
-  $optimized_metadata = false,
+  $optimized_metadata = true,
 ) {
   
   if $optimized_metadata {
+
+    include ::neutron::params
+
+    if ! defined(Service["neutron-opflex-agent"]) {
+       service {'neutron-opflex-agent':
+         ensure => 'running',
+         enable => 'true',
+       }
+    }
+
+    class {'neutron':}
+
     class {'neutron::agents::metadata':
       auth_password    => hiera('neutron::agents::metadata::auth_password'),
       shared_secret    => hiera('neutron_metadata_proxy_shared_secret'),

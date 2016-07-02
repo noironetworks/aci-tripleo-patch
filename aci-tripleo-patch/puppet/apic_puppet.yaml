@@ -26,6 +26,20 @@ resources:
       config:
         get_file: manifests/apic.pp
 
+  ExtraConfig1:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      group: puppet
+      options:
+        enable_debug: {get_param: ConfigDebug}
+        enable_hiera: True
+        enable_facter: False
+      inputs:
+      outputs:
+      - name: result
+      config:
+        get_file: manifests/compute_metadata.pp
+
   ExtraDeployments:
     type: OS::Heat::SoftwareDeployments
     properties:
@@ -33,3 +47,9 @@ resources:
       config: {get_resource: ExtraConfig}
       actions: ['CREATE','UPDATE']
 
+  ExtraDeployments1:
+    type: OS::Heat::SoftwareDeployments
+    properties:
+      servers:  {get_param: servers}
+      config: {get_resource: ExtraConfig1}
+      actions: ['CREATE','UPDATE']
