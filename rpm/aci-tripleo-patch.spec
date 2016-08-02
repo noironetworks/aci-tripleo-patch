@@ -1,10 +1,10 @@
 Name:           aci-tripleo-patch
 Version:        0.2
-Release:        3
+Release:        %{?release}%{!?release:1}
 Summary:        Files for ACI tripleO patch
 License:        ASL 2.0
 Group:          Applications/Utilities
-Source0:        aci-tripleo-patch-liberty.tar
+Source0:        aci-tripleo-patch.tar.gz
 BuildArch:      noarch
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 Requires:       libguestfs-tools
