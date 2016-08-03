@@ -3,17 +3,29 @@
 from __future__ import with_statement
 import re, pdb
 
-import os,sys,time,shutil,glob
+import os,sys,time,shutil,glob,shlex, subprocess
 
-from fabric.api import local,run,env,cd,lcd
-from fabric.contrib.files import exists
-from fabric.context_managers import prefix
 
 patch_dir = "/home/stack/aci_patch"
 tripleo_patch_dir = "/opt/aci-tripleo-patch"
 patched_images_dir = os.path.join(patch_dir, 'images')
 base_rpm_list = glob.glob("%s/*.rpm" % tripleo_patch_dir)
 opflex_rpm_list = glob.glob("%s/*.rpm" % patch_dir)
+
+def local_cmd(cmd, cwd=None):
+    print "Executing: %s" % cmd
+    a1 = shlex.split(str(cmd))
+    if cwd:
+       p = subprocess.Popen(a1, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd)
+    else:
+       p = subprocess.Popen(a1, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    o, e = p.communicate()
+    print o
+    if p.returncode:
+	print e
+	sys.exit(p.returncode)
+    return o
+
 
 if not opflex_rpm_list:
     print "No RPMs found under %s, please download ACI rpm's from CCO to %s dir" % (patch_dir, patch_dir)
@@ -54,39 +66,40 @@ for im in images_list:
 
 #patch the overcloud image
 
-with lcd(patch_dir):
-    img_path = os.path.join(patch_dir, "images", "overcloud-full.qcow2")
-    local("tar cf apic_gbp.tar -C %s  apic_gbp" % tripleo_patch_dir)
-    local("tar cf neutron.tar -C %s neutron" % tripleo_patch_dir)
+img_path = os.path.join(patch_dir, "images", "overcloud-full.qcow2")
+local_cmd("tar cf apic_gbp.tar -C %s  apic_gbp" % tripleo_patch_dir, cwd=patch_dir)
+local_cmd("tar cf neutron.tar -C %s neutron" % tripleo_patch_dir, cwd=patch_dir)
 
-    cmd = "virt-customize -a %s --upload apic_gbp.tar:/root/apic_gbp.tar --upload neutron.tar:/root/neutron.tar" % img_path
+cmd = "virt-customize -a %s --upload apic_gbp.tar:/root/apic_gbp.tar --upload neutron.tar:/root/neutron.tar" % img_path
 
     #cmd = cmd + " --upload mypuppet:/var/lib/heat-config/hooks/puppet "
     #cmd = cmd + " --firstboot-command \"adduser test -p cN.aVzmFELPKQ\" "
     #cmd = cmd + " --firstboot-command \" echo 'test ALL=(root) NOPASSWD:ALL' | tee -a /etc/sudoers.d/stack \" "
     #cmd = cmd + " --firstboot-command \" chmod 0440 /etc/sudoers.d/stack \""
-    cmd = cmd + " --firstboot-command \" yum -y remove python-networking-cisco \""
-    for f in sortedlist:
-	cmd = cmd + " --upload %s:/root/%s" % (f, os.path.basename(f))
-    for f in sortedlist:
-	cmd = cmd + " --firstboot-command \"rpm -ivh /root/%s\" " % (os.path.basename(f))
+cmd = cmd + " --firstboot-command \" yum -y remove python-networking-cisco \""
+for f in sortedlist:
+   cmd = cmd + " --upload %s:/root/%s" % (f, os.path.basename(f))
+for f in sortedlist:
+   cmd = cmd + " --firstboot-command \"rpm -ivh /root/%s\" " % (os.path.basename(f))
 
-    cmd = cmd + " --firstboot-command \"tar xf /root/apic_gbp.tar -C /usr/share/openstack-puppet/modules\" "
-    cmd = cmd + " --firstboot-command \"ln -s /usr/share/openstack-puppet/modules/apic_gbp /etc/puppet/modules/apic_gbp\" "
-    cmd = cmd + " --firstboot-command \"rm -rf /usr/share/openstack-puppet/modules/neutron \" "
-    cmd = cmd + " --firstboot-command \"tar xf /root/neutron.tar -C /usr/share/openstack-puppet/modules\" "
+cmd = cmd + " --firstboot-command \"tar xf /root/apic_gbp.tar -C /usr/share/openstack-puppet/modules\" "
+cmd = cmd + " --firstboot-command \"ln -s /usr/share/openstack-puppet/modules/apic_gbp /etc/puppet/modules/apic_gbp\" "
+cmd = cmd + " --firstboot-command \"rm -rf /usr/share/openstack-puppet/modules/neutron \" "
+cmd = cmd + " --firstboot-command \"tar xf /root/neutron.tar -C /usr/share/openstack-puppet/modules\" "
 
-    local(cmd)
+local_cmd(cmd, cwd=patch_dir)
+pipe = subprocess.Popen(". /home/stack/stackrc; env", stdout=subprocess.PIPE, shell=True)
+output = pipe.communicate()[0]
+env = dict((line.split('=', 1) for line in output.splitlines()))
+os.environ.update(env)
 
-#delete the existing glance images in undercloud
-with prefix('source ~/stackrc'):
-    imglist = local("openstack image list -f csv", capture=True)
-    for li in imglist.split('\n')[1::]:
-	iid = li.split(',')[0][1:-1]
-	local("openstack image delete %s" % iid)
+imglist = local_cmd("openstack image list -f csv")
+for li in imglist.split('\n')[1::]:
+   if li:
+       iid = li.split(',')[0][1:-1]
+       local_cmd("openstack image delete %s" % iid)
 
 #upload the new images
-with lcd('/home/stack'):
-    local ("openstack overcloud image upload --image-path %s" % patched_images_dir)
-    local ("openstack baremetal configure boot")
+local_cmd("openstack overcloud image upload --image-path %s" % patched_images_dir, cwd='/home/stack')
+local_cmd("openstack baremetal configure boot", cwd='/home/stack')
 
