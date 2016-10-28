@@ -72,9 +72,9 @@
 # enable_vif_type_n1kv = False
 #
 class neutron::plugins::ml2::cisco::nexus1000v (
-  $n1kv_vsm_ip                          = undef,
-  $n1kv_vsm_username                    = undef,
-  $n1kv_vsm_password                    = undef,
+  $n1kv_vsm_ip                          = $::os_service_default,
+  $n1kv_vsm_username                    = $::os_service_default,
+  $n1kv_vsm_password                    = $::os_service_default,
   $default_policy_profile               = 'default-pp',
   $default_vlan_network_profile         = 'default-vlan-np',
   $default_vxlan_network_profile        = 'default-vxlan-np',
@@ -89,9 +89,7 @@ class neutron::plugins::ml2::cisco::nexus1000v (
 {
   include ::neutron::plugins::ml2::cisco
 
-  $extension_drivers  = 'cisco_n1kv_ext'
   neutron_plugin_ml2 {
-    'ml2/extension_drivers'                          : value => $extension_drivers;
     'ml2_cisco_n1kv/n1kv_vsm_ips'                    : value => $n1kv_vsm_ip;
     'ml2_cisco_n1kv/username'                        : value => $n1kv_vsm_username;
     'ml2_cisco_n1kv/password'                        : value => $n1kv_vsm_password;

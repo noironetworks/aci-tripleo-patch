@@ -23,12 +23,12 @@
 # === Parameters:
 #
 # [*enabled*]
-#   (required) Whether or not to enable the FWaaS neutron plugin Service
-#   true/false
+#   (optional) Whether or not to enable the FWaaS neutron plugin Service
+#   Defaults to $::os_service_default
 #
 # [*driver*]
 #   (optional) FWaaS Driver to use
-#   Defaults to 'neutron.services.firewall.drivers.linux.iptables_fwaas.IptablesFwaasDriver'
+#   Defaults to $::os_service_default
 #
 # [*vpnaas_agent_package*]
 #   (optional) Use VPNaaS agent package instead of L3 agent package on debian platforms
@@ -36,11 +36,17 @@
 #   true/false
 #   Defaults to false
 #
+# [*purge_config*]
+#   (optional) Whether to set only the specified config options
+#   in the fwaas config.
+#   Defaults to false.
+#
 
 class neutron::services::fwaas (
-  $enabled              = true,
-  $driver               = 'neutron.services.firewall.drivers.linux.iptables_fwaas.IptablesFwaasDriver',
-  $vpnaas_agent_package = false
+  $enabled              = $::os_service_default,
+  $driver               = $::os_service_default,
+  $vpnaas_agent_package = false,
+  $purge_config         = false,
 ) {
 
   include ::neutron::params
@@ -71,6 +77,10 @@ class neutron::services::fwaas (
       'ensure' => $neutron::package_ensure,
       'tag'    => 'openstack'
     })
+  }
+
+  resources { 'neutron_fwaas_service_config':
+    purge => $purge_config,
   }
 
   neutron_fwaas_service_config {

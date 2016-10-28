@@ -54,7 +54,12 @@
 #
 # [*extensions*]
 #   (optional) Extensions list to use
-#   Defaults to []
+#   Defaults to $::os_service_default
+#
+# [*purge_config*]
+#   (optional) Whether to set only the specified config options
+#   in the sriov config.
+#   Defaults to false.
 #
 class neutron::agents::ml2::sriov (
   $package_ensure             = 'present',
@@ -63,12 +68,17 @@ class neutron::agents::ml2::sriov (
   $physical_device_mappings   = [],
   $polling_interval           = 2,
   $exclude_devices            = [],
-  $extensions                 = [],
+  $extensions                 = $::os_service_default,
+  $purge_config               = false,
 ) {
 
   include ::neutron::params
 
   Neutron_sriov_agent_config <||> ~> Service['neutron-sriov-nic-agent-service']
+
+  resources { 'neutron_sriov_agent_config':
+    purge => $purge_config,
+  }
 
   neutron_sriov_agent_config {
     'sriov_nic/polling_interval':         value => $polling_interval;

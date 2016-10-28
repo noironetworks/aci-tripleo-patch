@@ -58,19 +58,25 @@
 #   (optional) Firewall driver for realizing neutron security group function.
 #   Defaults to 'neutron.agent.linux.iptables_firewall.IptablesFirewallDriver'.
 #
+# [*purge_config*]
+#   (optional) Whether to set only the specified config options
+#   in the linuxbridge config.
+#   Defaults to false.
+#
 class neutron::agents::ml2::linuxbridge (
   $package_ensure   = 'present',
   $enabled          = true,
   $manage_service   = true,
   $tunnel_types     = [],
   $local_ip         = false,
-  $vxlan_group      = '224.0.0.1',
-  $vxlan_ttl        = false,
-  $vxlan_tos        = false,
-  $polling_interval = 2,
-  $l2_population    = false,
+  $vxlan_group      = $::os_service_default,
+  $vxlan_ttl        = $::os_service_default,
+  $vxlan_tos        = $::os_service_default,
+  $polling_interval = $::os_service_default,
+  $l2_population    = $::os_service_default,
   $physical_interface_mappings = [],
-  $firewall_driver  = 'neutron.agent.linux.iptables_firewall.IptablesFirewallDriver'
+  $firewall_driver  = 'neutron.agent.linux.iptables_firewall.IptablesFirewallDriver',
+  $purge_config     = false,
 ) {
 
   validate_array($tunnel_types)
@@ -80,31 +86,20 @@ class neutron::agents::ml2::linuxbridge (
 
   Neutron_agent_linuxbridge<||> ~> Service['neutron-plugin-linuxbridge-agent']
 
+  resources { 'neutron_agent_linuxbridge':
+    purge => $purge_config,
+  }
+
   if ('vxlan' in $tunnel_types) {
 
     if ! $local_ip {
       fail('The local_ip parameter is required when vxlan tunneling is enabled')
     }
 
-    if $vxlan_group {
-      neutron_agent_linuxbridge { 'vxlan/vxlan_group': value => $vxlan_group }
-    } else {
-      neutron_agent_linuxbridge { 'vxlan/vxlan_group': ensure => absent }
-    }
-
-    if $vxlan_ttl {
-      neutron_agent_linuxbridge { 'vxlan/vxlan_ttl': value => $vxlan_ttl }
-    } else {
-      neutron_agent_linuxbridge { 'vxlan/vxlan_ttl': ensure => absent }
-    }
-
-    if $vxlan_tos {
-      neutron_agent_linuxbridge { 'vxlan/vxlan_tos': value => $vxlan_tos }
-    } else {
-      neutron_agent_linuxbridge { 'vxlan/vxlan_tos': ensure => absent }
-    }
-
     neutron_agent_linuxbridge {
+      'vxlan/vxlan_ttl':     value => $vxlan_ttl;
+      'vxlan/vxlan_group':   value => $vxlan_group;
+      'vxlan/vxlan_tos':     value => $vxlan_tos;
       'vxlan/enable_vxlan':  value => true;
       'vxlan/local_ip':      value => $local_ip;
       'vxlan/l2_population': value => $l2_population;
@@ -113,8 +108,6 @@ class neutron::agents::ml2::linuxbridge (
     neutron_agent_linuxbridge {
       'vxlan/enable_vxlan':  value  => false;
       'vxlan/local_ip':      ensure => absent;
-      'vxlan/vxlan_group':   ensure => absent;
-      'vxlan/l2_population': ensure => absent;
     }
   }
 
@@ -157,11 +150,18 @@ class neutron::agents::ml2::linuxbridge (
     Package['neutron-plugin-linuxbridge-agent'] ~> Service['neutron-plugin-linuxbridge-agent']
   }
 
+  if $::neutron::rpc_backend == 'neutron.openstack.common.rpc.impl_kombu' {
+    $linuxbridge_agent_subscribe = Neutron_config['oslo_messaging_rabbit/rabbit_hosts']
+  } else {
+    $linuxbridge_agent_subscribe = undef
+  }
+
   service { 'neutron-plugin-linuxbridge-agent':
-    ensure  => $service_ensure,
-    name    => $::neutron::params::linuxbridge_agent_service,
-    enable  => $enabled,
-    require => Class['neutron'],
-    tag     => 'neutron-service',
+    ensure    => $service_ensure,
+    name      => $::neutron::params::linuxbridge_agent_service,
+    enable    => $enabled,
+    require   => Class['neutron'],
+    tag       => 'neutron-service',
+    subscribe => $linuxbridge_agent_subscribe,
   }
 }

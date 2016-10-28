@@ -38,12 +38,17 @@ sortkeylist = ['python-inotify-', 'python-meld3-', 'supervisor-', 'python-click-
 	'boost-', 'lldpd-', 'libuv-', 'libopflex-', 'libmodelgbp-', 'openvswitch-gbp-lib-', 'agent-ovs-',
 	'neutron-opflex-agent-', 'neutron-ml2-driver-apic-', 'openstack-neutron-gbp-', 'python-gbpclient-',
 	'python-django-horizon-gbp-', 'openstack-dashboard-gbp-', 'openstack-heat-gbp-']
+otherlist = ['ncclient-', 'neutron-dvs-agent-', 'python-UcsSdk-', 'python-networking-cisco-']
 
 sortedlist = []
 for key in sortkeylist:
     rex = re.compile("(^%s.*)" % key)
-    #sortedlist.append([m.group(0) for l in base_rpm_list+opflex_rpm_list for m in [rex.search(os.path.basename(l))] if m][0])
     sortedlist.append([l for l in base_rpm_list+opflex_rpm_list for m in [rex.search(os.path.basename(l))] if m][0])
+
+olist = []
+for key in otherlist:
+    rex = re.compile("(^%s.*)" % key)
+    olist.append([l for l in base_rpm_list+opflex_rpm_list for m in [rex.search(os.path.basename(l))] if m][0])
 
 #check that images directory exists and has the necessary images
 images_list = ['ironic-python-agent.initramfs', 'ironic-python-agent.kernel', 'overcloud-full.initrd', 'overcloud-full.qcow2', 'overcloud-full.vmlinuz']
@@ -78,6 +83,8 @@ cmd = "virt-customize -a %s --upload apic_gbp.tar:/root/apic_gbp.tar --upload ne
     #cmd = cmd + " --firstboot-command \" chmod 0440 /etc/sudoers.d/stack \""
 cmd = cmd + " --firstboot-command \" yum -y remove python-networking-cisco \""
 for f in sortedlist:
+   cmd = cmd + " --upload %s:/root/%s" % (f, os.path.basename(f))
+for f in olist:
    cmd = cmd + " --upload %s:/root/%s" % (f, os.path.basename(f))
 for f in sortedlist:
    cmd = cmd + " --firstboot-command \"rpm -ivh /root/%s\" " % (os.path.basename(f))

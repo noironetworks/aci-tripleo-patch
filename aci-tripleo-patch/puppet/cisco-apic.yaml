@@ -63,6 +63,11 @@ parameters:
     description: Neutron mechanism to use, either cisco_apic_ml2 or apic_gbp
     constraints:
       - allowed_values: ['cisco_apic_ml2', 'apic_gbp']
+  ACIL3Out:
+    type: string
+    default: ''
+    description: comma separated string representing ext. network name and associated epg. Example 'ext1:ext1epg, ext2:ext2epg'
+
 
 resources:
 
@@ -73,7 +78,7 @@ resources:
       config:
         hiera:
           datafiles:
-            cisco_apic_data:
+            cisco_aci_data:
               raw_data: {get_file: /usr/share/openstack-tripleo-heat-templates/puppet/hieradata/controller.yaml}
               mapped_data:
                 apic_gbp::opflex_agent::opflex_peer_ip: {get_input: opflex_peer_ip}
@@ -92,6 +97,7 @@ resources:
                 neutron::plugins::ml2::cisco::apic_ml2::encap_mode: {get_input: opflex_encap_mode}
                 neutron::plugins::ml2::cisco::apic_ml2::use_lldp_discovery: {get_input: lldp_discovery}
                 neutron::plugins::ml2::cisco::apic_ml2::apic_entity_profile: {get_input: apic_aep}
+                neutron::plugins::ml2::cisco::apic_ml2::apic_l3out: {get_input: apic_l3out}
                 neutron::agents::metadata::auth_password: {get_input: neutron_password}
                 cisco::apic::opflex::neutron_mechanism: {get_input: opflex_neutron_mechanism}
                 neutron::plugins::apic_gbp::apic_hosts: {get_input: apic_hosts}
@@ -101,7 +107,7 @@ resources:
                 neutron::plugins::apic_gbp::encap_mode: {get_input: opflex_encap_mode}
                 neutron::plugins::apic_gbp::use_lldp_discovery: {get_input: lldp_discovery}
                 neutron::plugins::apic_gbp::apic_entity_profile: {get_input: apic_aep}
-                #neutron::agents::metadata::metadata_ip: {get_input: neutron_api_network}
+                neutron::plugins::apic_gbp::apic_l3out: {get_input: apic_l3out}
   CiscoApicOpenstackDeployment:
     type: OS::Heat::StructuredDeployment
     properties:
@@ -124,7 +130,7 @@ resources:
         optimized_neutron_metadata: {get_param: ACIOpflexOptimizedMetadata}
         neutron_password: {get_param: NeutronPassword}
         opflex_neutron_mechanism: {get_param: ACIOpflexMechanism}
-        #neutron_api_network: {get_attr: [NetIpMap, net_ip_map, {get_param: [ServiceNetMap, NeutronApiNetwork]}]}
+        apic_l3out: {get_param: ACIL3Out}
 outputs:
   deploy_stdout:
     description: Deployment reference, used to trigger puppet apply on changes

@@ -39,12 +39,17 @@
 # [*vxlan_group*]
 #  (required) Multicast group for VXLAN. If unset, disables VXLAN multicast mode.
 #
+# [*max_header_size*]
+#  (optional) Geneve encapsulation header size is dynamic, this value is used to calculate
+#  the maximum MTU for the driver.
+#
 define neutron::plugins::ml2::type_driver (
   $flat_networks,
   $tunnel_id_ranges,
   $network_vlan_ranges,
   $vni_ranges,
-  $vxlan_group
+  $vxlan_group,
+  $max_header_size
 ){
   if ($name == 'flat') {
     neutron_plugin_ml2 {
@@ -107,8 +112,21 @@ define neutron::plugins::ml2::type_driver (
   elsif ($name == 'nexus_vxlan') {
     # Nexus_vxlan type driver has its own class separate from this one
   }
+  elsif ($name == 'midonet') or ($name == 'uplink') {
+    # midonet type driver has its own class separate from this one
+  }
+  elsif ($name == 'geneve') {
+    validate_vni_ranges($vni_ranges)
+    if !is_service_default($max_header_size) {
+      validate_integer($max_header_size)
+    }
+    neutron_plugin_ml2 {
+      'ml2_type_geneve/max_header_size': value => $max_header_size;
+      'ml2_type_geneve/vni_ranges':      value => join($vni_ranges,',');
+    }
+  }
   elsif ($name == 'opflex') {
-    if hiera(apic_gbp::opflex_agent::opflex_encap_type) == 'vlan' {
+    if hiera(apic_gbp::opflex_agent::opflex_encap_mode) == 'vlan' {
       validate_network_vlan_ranges($network_vlan_ranges)
       neutron_plugin_ml2 {
         'ml2_type_vlan/network_vlan_ranges': value => join(any2array($network_vlan_ranges), ',');

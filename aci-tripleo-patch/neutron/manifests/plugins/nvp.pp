@@ -19,19 +19,25 @@
 # [*default_l3_gw_service_uuid*]
 #   (Optional) UUID for the default l3 gateway service to use with this cluster.
 #   To be specified if planning to use logical routers with external gateways.
-#   Defaults to None.
+#   Defaults to $::os_service_default.
 #
 # [*package_ensure*]
 #   (optional) Ensure state for package.
 #   Defaults to 'present'.
+#
+# [*purge_config*]
+#   (optional) Whether to set only the specified config options
+#   in the nvp config.
+#   Defaults to false.
 #
 class neutron::plugins::nvp (
   $default_tz_uuid,
   $nvp_controllers,
   $nvp_user,
   $nvp_password,
-  $default_l3_gw_service_uuid = undef,
-  $package_ensure    = 'present'
+  $default_l3_gw_service_uuid = $::os_service_default,
+  $package_ensure    = 'present',
+  $purge_config      = false,
 ) {
 
   include ::neutron::params
@@ -48,18 +54,17 @@ class neutron::plugins::nvp (
 
   validate_array($nvp_controllers)
 
-  neutron_plugin_nvp {
-    'DEFAULT/default_tz_uuid': value => $default_tz_uuid;
-    'DEFAULT/nvp_controllers': value => join($nvp_controllers, ',');
-    'DEFAULT/nvp_user':        value => $nvp_user;
-    'DEFAULT/nvp_password':    value => $nvp_password, secret => true;
-    'nvp/metadata_mode':       value => 'access_network';
+  resources { 'neutron_plugin_nvp':
+    purge => $purge_config,
   }
 
-  if($default_l3_gw_service_uuid) {
-    neutron_plugin_nvp {
-      'DEFAULT/default_l3_gw_service_uuid': value => $default_l3_gw_service_uuid;
-    }
+  neutron_plugin_nvp {
+    'DEFAULT/default_tz_uuid':            value => $default_tz_uuid;
+    'DEFAULT/nvp_controllers':            value => join($nvp_controllers, ',');
+    'DEFAULT/nvp_user':                   value => $nvp_user;
+    'DEFAULT/nvp_password':               value => $nvp_password, secret => true;
+    'DEFAULT/default_l3_gw_service_uuid': value => $default_l3_gw_service_uuid;
+    'nvp/metadata_mode':                  value => 'access_network';
   }
 
   if $::neutron::core_plugin != 'neutron.plugins.nicira.NeutronPlugin.NvpPluginV2' {

@@ -17,12 +17,18 @@
 #   service is desirable and defaulted)
 # [*keystone_password*]
 #   Password from which midonet api will authenticate against Keystone
+#   Defaults to $::os_service_default
 # [*keystone_tenant*]
 #   Tenant from which midonet api will authenticate against Keystone (services
 #   tenant is desirable and defaulted)
 # [*sync_db*]
 #   Whether 'midonet-db-manage' should run to create and/or syncrhonize the database
 #   with MidoNet specific tables. Defaults to false
+#
+# [*purge_config*]
+#   (optional) Whether to set only the specified config options
+#   in the midonet config.
+#   Defaults to false.
 #
 # === Examples
 #
@@ -69,9 +75,10 @@ class neutron::plugins::midonet (
   $midonet_api_ip    = '127.0.0.1',
   $midonet_api_port  = '8080',
   $keystone_username = 'neutron',
-  $keystone_password = undef,
+  $keystone_password = $::os_service_default,
   $keystone_tenant   = 'services',
-  $sync_db           = false
+  $sync_db           = false,
+  $purge_config      = false,
 ) {
 
   include ::neutron::params
@@ -91,6 +98,10 @@ class neutron::plugins::midonet (
     Package['neutron-server'] -> Neutron_plugin_midonet<||>
   } else {
     Package['neutron'] -> Neutron_plugin_midonet<||>
+  }
+
+  resources { 'neutron_plugin_midonet':
+    purge => $purge_config,
   }
 
   neutron_plugin_midonet {

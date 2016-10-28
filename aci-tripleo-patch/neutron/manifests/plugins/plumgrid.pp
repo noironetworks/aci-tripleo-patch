@@ -12,11 +12,11 @@
 #
 # [*username*]
 #   PLUMgrid platform username
-#   Defaults to undef
+#   Defaults to $::os_service_default
 #
 # [*password*]
 #   PLUMgrid platform password
-#   Defaults to undef
+#   Defaults to $::os_service_default
 #
 # [*servertimeout*]
 #   Request timeout duration (seconds) to PLUMgrid paltform
@@ -28,7 +28,7 @@
 #
 # [*admin_password*]
 #   Keystone admin password
-#   Defaults to undef
+#   Defaults to $::os_service_default
 #
 # [*controller_priv_host*]
 #   Controller private host IP
@@ -40,7 +40,11 @@
 #
 # [*identity_version*]
 #   Keystone identity version
-#   Defaults to v2.0
+#   Defaults to v3
+#
+# [*user_domain_name*]
+#   Keystone user domain name
+#   Defaults to Default
 #
 # [*nova_metadata_ip*]
 #   Nova metadata IP
@@ -50,9 +54,13 @@
 #   Nova metadata port
 #   Defaults to 8775
 #
+# [*nova_metadata_subnet*]
+#   Nova metadata subnet
+#   Defaults to 127.0.0.1/24
+#
 # [*metadata_proxy_shared_secret*]
 #   Neutron metadata shared secret key
-#   Defaults to undef
+#   Defaults to $::os_service_default
 #
 # [*connector_type*]
 #   Neutron network connector type
@@ -60,15 +68,15 @@
 #
 # [*l2gateway_vendor*]
 #   L2 gateway vendor
-#   Defaults to undef
+#   Defaults to $::os_service_default
 #
 # [*l2gateway_sw_username*]
 #   L2 gateway username
-#   Defaults to undef
+#   Defaults to $::os_service_default
 #
 # [*l2gateway_sw_password*]
 #   L2 gateway password
-#   Defaults to undef
+#   Defaults to $::os_service_default
 #
 # [*plumlib_package_ensure*]
 #   (optional) Ensure state for plumlib package.
@@ -78,26 +86,34 @@
 #   (optional) Ensure state for plugin package.
 #   Defaults to 'present'.
 #
+# [*purge_config*]
+#   (optional) Whether to set only the specified config options
+#   in the plumgrid config.
+#   Defaults to false.
+#
 class neutron::plugins::plumgrid (
   $director_server              = '127.0.0.1',
   $director_server_port         = '443',
-  $username                     = undef,
-  $password                     = undef,
+  $username                     = $::os_service_default,
+  $password                     = $::os_service_default,
   $servertimeout                = '99',
   $connection                   = 'http://127.0.0.1:35357/v2.0',
-  $admin_password               = undef,
+  $admin_password               = $::os_service_default,
   $controller_priv_host         = '127.0.0.1',
   $auth_protocol                = 'http',
-  $identity_version             = 'v2.0',
+  $identity_version             = 'v3',
+  $user_domain_name             = 'Default',
   $nova_metadata_ip             = '127.0.0.1',
   $nova_metadata_port           = '8775',
-  $metadata_proxy_shared_secret = undef,
+  $nova_metadata_subnet         = '127.0.0.1/24',
+  $metadata_proxy_shared_secret = $::os_service_default,
   $connector_type               = 'distributed',
-  $l2gateway_vendor             = undef,
-  $l2gateway_sw_username        = undef,
-  $l2gateway_sw_password        = undef,
+  $l2gateway_vendor             = $::os_service_default,
+  $l2gateway_sw_username        = $::os_service_default,
+  $l2gateway_sw_password        = $::os_service_default,
   $plumlib_package_ensure       = 'present',
-  $package_ensure               = 'present'
+  $package_ensure               = 'present',
+  $purge_config                 = false,
 ) {
 
   include ::neutron::params
@@ -151,6 +167,14 @@ class neutron::plugins::plumgrid (
     }
   }
 
+  resources { 'neutron_plugin_plumgrid':
+    purge => $purge_config,
+  }
+
+  resources { 'neutron_plumlib_plumgrid':
+    purge => $purge_config,
+  }
+
   neutron_plugin_plumgrid {
     'PLUMgridDirector/director_server':      value => $director_server;
     'PLUMgridDirector/director_server_port': value => $director_server_port;
@@ -158,6 +182,9 @@ class neutron::plugins::plumgrid (
     'PLUMgridDirector/password':             value => $password, secret =>true;
     'PLUMgridDirector/servertimeout':        value => $servertimeout;
     'database/connection':                   value => $connection;
+    'l2gateway/vendor':                      value => $l2gateway_vendor;
+    'l2gateway/sw_username':                 value => $l2gateway_sw_username;
+    'l2gateway/sw_password':                 value => $l2gateway_sw_password;
   }
 
   neutron_plumlib_plumgrid {
@@ -166,14 +193,13 @@ class neutron::plugins::plumgrid (
     'keystone_authtoken/auth_uri':                   value => "${auth_protocol}://${controller_priv_host}:35357/${identity_version}";
     'keystone_authtoken/admin_tenant_name':          value => 'admin';
     'keystone_authtoken/identity_version':           value => $identity_version;
+    'keystone_authtoken/user_domain_name':           value => $user_domain_name;
     'PLUMgridMetadata/enable_pg_metadata' :          value => 'True';
     'PLUMgridMetadata/metadata_mode':                value => 'local';
     'PLUMgridMetadata/nova_metadata_ip':             value => $nova_metadata_ip;
     'PLUMgridMetadata/nova_metadata_port':           value => $nova_metadata_port;
+    'PLUMgridMetadata/nova_metadata_subnet':         value => $nova_metadata_subnet;
     'PLUMgridMetadata/metadata_proxy_shared_secret': value => $metadata_proxy_shared_secret;
     'ConnectorType/connector_type':                  value => $connector_type;
-    'l2gateway/vendor':                              value => $l2gateway_vendor;
-    'l2gateway/sw_username':                         value => $l2gateway_sw_username;
-    'l2gateway/sw_password':                         value => $l2gateway_sw_password;
   }
 }
