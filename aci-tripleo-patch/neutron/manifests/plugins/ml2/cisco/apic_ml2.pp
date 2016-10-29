@@ -18,31 +18,31 @@ class neutron::plugins::ml2::cisco::apic_ml2 (
   include ::neutron::params
   $neutron_service_name = $::neutron::params::server_service
 
-  Neutron_config<||>     ~> Service<| title == 'neutron-server' |>
-  Neutron_plugin_ml2<||> ~> Service<| title == 'neutron-server' |>
+  #Neutron_config<||>     ~> Service<| title == 'neutron-server' |>
+  #Neutron_plugin_ml2<||> ~> Service<| title == 'neutron-server' |>
 
   package { 'cisco_apic_ml2_package':
     ensure => $package_ensure,
     name   => $::neutron::params::cisco_apic_ml2_package,
   }
 
-  if $node_role == "controller" {
-     $ns_ensure = 'running'
-     $ns_enabled = true
-  } else {
-     $ns_ensure = 'stopped'
-     $ns_enabled = false
-  }
-  if ! defined(Service["neutron-server"]) { 
-     service { "neutron-server":
-       name       => $neutron_service_name,
-       ensure     => $ns_ensure,
-       enable     => $ns_enabled,
-       hasstatus  => true,
-       hasrestart => true,
-       start      => '/usr/bin/systemctl start neutron-server && /usr/bin/sleep 5',
-     }
-  }
+  #if $node_role == "controller" {
+  #   $ns_ensure = 'running'
+  #   $ns_enabled = true
+  #} else {
+  #   $ns_ensure = 'stopped'
+  #   $ns_enabled = false
+  #}
+  #if ! defined(Service["neutron-server"]) { 
+  #   service { "neutron-server":
+  #     name       => $neutron_service_name,
+  #     ensure     => $ns_ensure,
+  #     enable     => $ns_enabled,
+  #     hasstatus  => true,
+  #     hasrestart => true,
+  #     start      => '/usr/bin/systemctl start neutron-server && /usr/bin/sleep 5',
+  #   }
+  #}
 
   if $use_lldp_discovery {
     $lldp_ensure = 'running'
@@ -80,7 +80,7 @@ class neutron::plugins::ml2::cisco::apic_ml2 (
        exec { 'apic-ml2-db-sync':
          command     => '/bin/apic-ml2-db-manage --config-file /etc/neutron/neutron.conf upgrade head',
          logoutput   => on_failure,
-         notify      => Service["neutron-server"],
+         #notify      => Service["neutron-server"],
          require     => Package['cisco_apic_ml2_package'],
          #refreshonly => true,
        }
@@ -98,6 +98,10 @@ class neutron::plugins::ml2::cisco::apic_ml2 (
   neutron_config {
     'DEFAULT/service_plugins':                     value => 'cisco_apic_l3';
     'DEFAULT/apic_system_id':                      value => $apic_system_id;
+  }
+
+  neutron_dhcp_agent_config {
+    'DEFAULT/enable_isolated_metadata':             value => True;
   }
 
   neutron_plugin_ml2 {
