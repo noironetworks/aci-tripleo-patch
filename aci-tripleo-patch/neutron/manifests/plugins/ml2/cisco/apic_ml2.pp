@@ -12,7 +12,8 @@ class neutron::plugins::ml2::cisco::apic_ml2 (
   $use_lldp_discovery       = true,
   $package_ensure           = 'present',
   $sync_db                  = false,
-  $apic_l3out              = '',
+  $apic_l3out               = '',
+  $apic_vpcpairs            = '',
 ) {
 
   include ::neutron::params
@@ -116,6 +117,12 @@ class neutron::plugins::ml2::cisco::apic_ml2 (
     'ml2_cisco_apic/apic_entity_profile':          value => $apic_entity_profile;
     'ml2_cisco_apic/apic_provision_infra':         value => $apic_provision_infra;
     'ml2_cisco_apic/apic_provision_hostlinks':     value => $apic_provision_hostlinks;
+  }
+
+  if $apic_vpcpairs != "" {
+     neutron_plugin_ml2 {
+       'ml2_cisco_apic/apic_vpc_pairs':   value => $apic_vpcpairs;
+     }
   }
 
   define populate_extnet {

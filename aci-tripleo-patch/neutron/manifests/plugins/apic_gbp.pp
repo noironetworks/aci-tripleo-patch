@@ -12,7 +12,8 @@ class neutron::plugins::apic_gbp (
   $use_lldp_discovery       = true,
   $package_ensure           = 'present',
   $sync_db                  = false,
-  $apic_l3out              = '',
+  $apic_l3out               = '',
+  $apic_vpcpairs            = '',
 ) {
 
   include ::neutron::params
@@ -60,19 +61,19 @@ class neutron::plugins::apic_gbp (
   #}
 
   if $use_lldp_discovery {
-    $lldp_ensure = 'running'
-    $lldp_enabled = true
-    $host_agent_ensure = 'running'
-    $host_agent_enabled = true
-    $svc_agent_ensure = 'running'
-    $svc_agent_enabled = true
+     $lldp_ensure = 'running'
+     $lldp_enabled = true
+     $host_agent_ensure = 'running'
+     $host_agent_enabled = true
+     $svc_agent_ensure = 'running'
+     $svc_agent_enabled = true
   } else {
-    $lldp_ensure = 'stopped'
-    $lldp_enabled = false
-    $host_agent_ensure = 'stopped'
-    $host_agent_enabled = false
-    $svc_agent_ensure = 'stopped'
-    $svc_agent_enabled = false
+     $lldp_ensure = 'stopped'
+     $lldp_enabled = false
+     $host_agent_ensure = 'stopped'
+     $host_agent_enabled = false
+     $svc_agent_ensure = 'stopped'
+     $svc_agent_enabled = false
   }
 
   service { 'lldpd':
@@ -138,6 +139,12 @@ class neutron::plugins::apic_gbp (
     'ml2_cisco_apic/apic_provision_hostlinks':      value => $apic_provision_hostlinks;
     'group_policy/policy_drivers':                  value => 'implicit_policy,apic';
     'group_policy_implicit_policy/default_ip_pool': value => '192.168.0.0/16';
+  }
+
+  if $apic_vpcpairs != "" {
+     neutron_plugin_ml2 {
+       'ml2_cisco_apic/apic_vpc_pairs':   value => $apic_vpcpairs;
+     }
   }
 
   define populate_extnet {

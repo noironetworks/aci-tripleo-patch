@@ -41,9 +41,6 @@ parameters:
   ACIOpflexBridgeToPatch:
     type: string
     default: 'br-ex'
-  ACIUseLLDPDiscovery:
-    type: boolean
-    default: true
   ACIOpflexEncapMode:
     type: string
     default: 'vxlan'  
@@ -67,6 +64,10 @@ parameters:
     type: string
     default: ''
     description: comma separated string representing ext. network name and associated epg. Example 'ext1:ext1epg, ext2:ext2epg'
+  ACIVpcPairs:
+    type: string
+    default: ''
+    description: comma separated string of switch id's which form vpc pairs. Example '101:102,103:104'
 
 
 resources:
@@ -95,9 +96,9 @@ resources:
                 neutron::plugins::ml2::cisco::apic_ml2::apic_password: {get_input: apic_password}
                 neutron::plugins::ml2::cisco::apic_ml2::apic_system_id: {get_input: apic_system_id}
                 neutron::plugins::ml2::cisco::apic_ml2::encap_mode: {get_input: opflex_encap_mode}
-                neutron::plugins::ml2::cisco::apic_ml2::use_lldp_discovery: {get_input: lldp_discovery}
                 neutron::plugins::ml2::cisco::apic_ml2::apic_entity_profile: {get_input: apic_aep}
                 neutron::plugins::ml2::cisco::apic_ml2::apic_l3out: {get_input: apic_l3out}
+                neutron::plugins::ml2::cisco::apic_ml2::apic_vpcpairs: {get_input: apic_vpcpairs}
                 neutron::agents::metadata::auth_password: {get_input: neutron_password}
                 cisco::apic::opflex::neutron_mechanism: {get_input: opflex_neutron_mechanism}
                 neutron::plugins::apic_gbp::apic_hosts: {get_input: apic_hosts}
@@ -105,9 +106,9 @@ resources:
                 neutron::plugins::apic_gbp::apic_password: {get_input: apic_password}
                 neutron::plugins::apic_gbp::apic_system_id: {get_input: apic_system_id}
                 neutron::plugins::apic_gbp::encap_mode: {get_input: opflex_encap_mode}
-                neutron::plugins::apic_gbp::use_lldp_discovery: {get_input: lldp_discovery}
                 neutron::plugins::apic_gbp::apic_entity_profile: {get_input: apic_aep}
                 neutron::plugins::apic_gbp::apic_l3out: {get_input: apic_l3out}
+                neutron::plugins::apic_gbp::apic_vpcpairs: {get_input: apic_vpcpairs}
   CiscoApicOpenstackDeployment:
     type: OS::Heat::StructuredDeployment
     properties:
@@ -125,12 +126,12 @@ resources:
         apic_hosts: {get_param: ACIApicIp}
         apic_username: {get_param: ACIApicUser}
         apic_password: {get_param: ACIApicPassword}
-        lldp_discovery: {get_param: ACIUseLLDPDiscovery}
         apic_aep: {get_param: ACIApicEntityProfile}
         optimized_neutron_metadata: {get_param: ACIOpflexOptimizedMetadata}
         neutron_password: {get_param: NeutronPassword}
         opflex_neutron_mechanism: {get_param: ACIOpflexMechanism}
         apic_l3out: {get_param: ACIL3Out}
+        apic_vpcpairs: {get_param: ACIVpcPairs}
 outputs:
   deploy_stdout:
     description: Deployment reference, used to trigger puppet apply on changes
