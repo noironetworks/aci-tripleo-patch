@@ -36,9 +36,6 @@ class neutron::params {
     # Add templated Cisco Nexus ML2 config to confdir
     $cisco_ml2_mech_cisco_nexus_config_file = '/etc/neutron/conf.d/neutron-server/ml2_mech_cisco_nexus.conf'
 
-    $cisco_apic_ml2_package = 'neutron-ml2-driver-apic'
-    $cisco_apic_config_file = '/etc/neutron/plugins/ml2/ml2_conf_cisco_apic.ini'
-
     $opencontrail_plugin_package = 'neutron-plugin-contrail'
     $opencontrail_config_file    = '/etc/neutron/plugins/opencontrail/ContrailPlugin.ini'
 
@@ -48,6 +45,9 @@ class neutron::params {
     $plumgrid_plugin_package    = 'networking-plumgrid'
     $plumgrid_pythonlib_package = 'plumgrid-pythonlib'
     $plumgrid_config_file       = '/etc/neutron/plugins/plumgrid/plumgrid.ini'
+
+    $cisco_apic_ml2_package = 'neutron-ml2-driver-apic'
+    $cisco_apic_config_file = '/etc/neutron/plugins/ml2/ml2_conf_cisco_apic.ini'
 
     $nvp_server_package = 'openstack-neutron-nicira'
 
@@ -73,6 +73,7 @@ class neutron::params {
     } else {
       $openswan_package     = 'openswan'
     }
+    $libreswan_package     = 'libreswan'
 
     $l3_agent_package   = false
     $l3_agent_service   = 'neutron-l3-agent'
@@ -122,8 +123,6 @@ class neutron::params {
     $cisco_config_file                      = '/etc/neutron/plugins/cisco/cisco_plugins.ini'
     $cisco_ml2_mech_cisco_nexus_config_file = '/etc/neutron/plugins/ml2/ml2_mech_cisco_nexus.ini'
 
-    $cisco_apic_ml2_package = 'neutron-ml2-driver-apic'
-
     $opencontrail_plugin_package = 'neutron-plugin-contrail'
     $opencontrail_config_file    = '/etc/neutron/plugins/opencontrail/ContrailPlugin.ini'
 
@@ -153,6 +152,7 @@ class neutron::params {
     $vpnaas_agent_service = 'neutron-vpn-agent'
 
     $openswan_package     = 'openswan'
+    $libreswan_package    = false
 
     $metadata_agent_package = 'neutron-metadata-agent'
     $metadata_agent_service = 'neutron-metadata-agent'

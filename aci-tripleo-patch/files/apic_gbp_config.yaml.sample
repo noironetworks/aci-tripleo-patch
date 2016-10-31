@@ -16,6 +16,5 @@ parameter_defaults:
   ACIApicSystemId: 'openstack_aci'
   ACIApicEntityProfile: 'f-aep'
   ACIOpflexEncapMode: 'vlan'
-  ACIUseLLDPDiscovery: 'true'
   ACIOpflexOptimizedMetadata: 'true'
   ACIOpflexMechanism: 'cisco_apic_ml2'

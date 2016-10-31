@@ -107,14 +107,6 @@ define neutron::plugins::ml2::type_driver (
   elsif ($name == 'nexus_vxlan') {
     # Nexus_vxlan type driver has its own class separate from this one
   }
-  elsif ($name == 'opflex') {
-    if hiera(apic_gbp::opflex_agent::opflex_encap_type) == 'vlan' {
-      validate_network_vlan_ranges($network_vlan_ranges)
-      neutron_plugin_ml2 {
-        'ml2_type_vlan/network_vlan_ranges': value => join(any2array($network_vlan_ranges), ',');
-      }
-    }
-  }
   else {
     # detect an invalid type_drivers value
     fail('type_driver unknown.')

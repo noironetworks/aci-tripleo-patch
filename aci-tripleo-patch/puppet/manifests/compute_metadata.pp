@@ -1,4 +1,6 @@
-$ctrlrs = hiera('controller_node_names')
+$ctrlrs = hiera('controller_node_names', '_not_there')
+
+if $ctrlrs != "_not_there" {
 if $hostname in $ctrlrs {
    $role = 'controller'
    $sync_db = true
@@ -18,5 +20,6 @@ if $role == "compute" {
   }
 
   class {'apic_gbp::compute':}
+}
 }
 
