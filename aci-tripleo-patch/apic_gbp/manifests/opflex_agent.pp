@@ -76,8 +76,8 @@ class apic_gbp::opflex_agent(
      }
    }
    elsif ($opflex_encap_mode == 'vlan') {
-     $v_opflex_encap_iface = "${opflex_ovs_bridge}_to_${opflex_target_bridge_to_patch}"
-     if $opflex_target_bridge_to_patch {
+     if $opflex_target_bridge_to_patch != '' {
+       $v_opflex_encap_iface = "${opflex_ovs_bridge}_to_${opflex_target_bridge_to_patch}"
        setup_ovs_patch_port{ 'source':
          source_bridge => $opflex_ovs_bridge,
          target_bridge => $opflex_target_bridge_to_patch,
@@ -150,11 +150,13 @@ class apic_gbp::opflex_agent(
      external_ids => "bridge-id=$opflex_ovs_bridge",
    }
 
-   exec {'add_vxlan_port':
-      command => "/usr/bin/ovs-vsctl add-port $opflex_ovs_bridge $opflex_encap_iface -- set Interface $opflex_encap_iface type=vxlan options:remote_ip=flow options:key=flow options:dst_port=8472",
-      unless => "/usr/bin/ovs-vsctl show | /bin/grep $opflex_encap_iface ",
-      returns => [0,1,2],
-      require => [File['agent-conf'], Vs_bridge[$opflex_ovs_bridge]],
+   if ($opflex_encap_mode == 'vxlan') {
+      exec {'add_vxlan_port':
+         command => "/usr/bin/ovs-vsctl add-port $opflex_ovs_bridge $opflex_encap_iface -- set Interface $opflex_encap_iface type=vxlan options:remote_ip=flow options:key=flow options:dst_port=8472",
+         unless => "/usr/bin/ovs-vsctl show | /bin/grep $opflex_encap_iface ",
+         returns => [0,1,2],
+         require => [File['agent-conf'], Vs_bridge[$opflex_ovs_bridge]],
+      }
    }
 
 }

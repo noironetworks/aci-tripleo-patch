@@ -151,9 +151,15 @@ class neutron::plugins::apic_gbp (
     $pair = split($name, ':')
     $net = $pair[0]
     $epg = $pair[1]
+    $snat = $pair[2]
     neutron_plugin_ml2 {
       "apic_external_network:$net/external_epg":   value => $epg;
       "apic_external_network:$net/preexisting":   value => True;
+    }
+    if $snat {
+       neutron_plugin_ml2 {
+         "apic_external_network:$net/host_pool_cidr": value => $snat;
+       }
     }
   }
 
