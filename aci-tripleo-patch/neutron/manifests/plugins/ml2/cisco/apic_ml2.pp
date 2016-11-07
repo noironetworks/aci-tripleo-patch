@@ -14,6 +14,8 @@ class neutron::plugins::ml2::cisco::apic_ml2 (
   $sync_db                  = false,
   $apic_l3out               = '',
   $apic_vpcpairs            = '',
+  $optimized_dhcp           = 'true',
+  $optimized_metadata       = 'true',
 ) {
 
   include ::neutron::params
@@ -117,6 +119,8 @@ class neutron::plugins::ml2::cisco::apic_ml2 (
     'ml2_cisco_apic/apic_entity_profile':          value => $apic_entity_profile;
     'ml2_cisco_apic/apic_provision_infra':         value => $apic_provision_infra;
     'ml2_cisco_apic/apic_provision_hostlinks':     value => $apic_provision_hostlinks;
+    'ml2_cisco_apic/enable_optimized_dhcp':        value => $optimized_dhcp;
+    'ml2_cisco_apic/enable_optimized_metadata':    value => $optimized_metadata;
   }
 
   if $apic_vpcpairs != "" {
