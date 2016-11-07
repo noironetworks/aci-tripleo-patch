@@ -49,6 +49,9 @@ parameters:
   ACIOpflexOptimizedMetadata:
     type: boolean
     default: true
+  ACIOpflexOptimizedDhcp:
+    type: boolean
+    default: true
   NeutronPassword:
     default: unset
     description: The password for the neutron service and db account, used by neutron agents.
@@ -99,6 +102,8 @@ resources:
                 neutron::plugins::ml2::cisco::apic_ml2::apic_entity_profile: {get_input: apic_aep}
                 neutron::plugins::ml2::cisco::apic_ml2::apic_l3out: {get_input: apic_l3out}
                 neutron::plugins::ml2::cisco::apic_ml2::apic_vpcpairs: {get_input: apic_vpcpairs}
+                neutron::plugins::ml2::cisco::apic_ml2:optimized_dhcp: {get_input: optimized_neutron_dhcp}
+                neutron::plugins::ml2::cisco::apic_ml2:optimized_metadata: {get_input: optimized_neutron_metadata}
                 neutron::agents::metadata::auth_password: {get_input: neutron_password}
                 cisco::apic::opflex::neutron_mechanism: {get_input: opflex_neutron_mechanism}
                 neutron::plugins::apic_gbp::apic_hosts: {get_input: apic_hosts}
@@ -109,6 +114,8 @@ resources:
                 neutron::plugins::apic_gbp::apic_entity_profile: {get_input: apic_aep}
                 neutron::plugins::apic_gbp::apic_l3out: {get_input: apic_l3out}
                 neutron::plugins::apic_gbp::apic_vpcpairs: {get_input: apic_vpcpairs}
+                neutron::plugins::apic_gbp:optimized_dhcp: {get_input: optimized_neutron_dhcp}
+                neutron::plugins::apic_gbp:optimized_metadata: {get_input: optimized_neutron_metadata}
   CiscoApicOpenstackDeployment:
     type: OS::Heat::StructuredDeployment
     properties:
@@ -128,6 +135,7 @@ resources:
         apic_password: {get_param: ACIApicPassword}
         apic_aep: {get_param: ACIApicEntityProfile}
         optimized_neutron_metadata: {get_param: ACIOpflexOptimizedMetadata}
+        optimized_neutron_dhcp: {get_param: ACIOpflexOptimizedDhcp}
         neutron_password: {get_param: NeutronPassword}
         opflex_neutron_mechanism: {get_param: ACIOpflexMechanism}
         apic_l3out: {get_param: ACIL3Out}

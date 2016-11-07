@@ -14,6 +14,8 @@ class neutron::plugins::apic_gbp (
   $sync_db                  = false,
   $apic_l3out               = '',
   $apic_vpcpairs            = '',
+  $optimized_dhcp           = 'true',
+  $optimized_metadata       = 'true',
 ) {
 
   include ::neutron::params
@@ -137,6 +139,8 @@ class neutron::plugins::apic_gbp (
     'ml2_cisco_apic/apic_entity_profile':           value => $apic_entity_profile;
     'ml2_cisco_apic/apic_provision_infra':          value => $apic_provision_infra;
     'ml2_cisco_apic/apic_provision_hostlinks':      value => $apic_provision_hostlinks;
+    'ml2_cisco_apic/enable_optimized_dhcp':         value => $optimized_dhcp;
+    'ml2_cisco_apic/enable_optimized_metadata':     value => $optimized_metadata;
     'group_policy/policy_drivers':                  value => 'implicit_policy,apic';
     'group_policy_implicit_policy/default_ip_pool': value => '192.168.0.0/16';
   }
