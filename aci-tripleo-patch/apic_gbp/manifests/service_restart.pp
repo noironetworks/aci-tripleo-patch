@@ -5,20 +5,32 @@ class apic_gbp::service_restart(
       exec {'restart-neutron-server':
          command => "/sbin/pcs resource restart  neutron-server-clone --wait=10m;/bin/sleep 30",
       }
+
       exec {'restart-neutron-dhcpagent':
-         command => "/sbin/pcs resource restart neutron-dhcp-agent-clone --wait=2m",
+         command => "/sbin/pcs resource restart neutron-dhcp-agent-clone --wait=10m",
          require => Exec['restart-neutron-server'],
       }
+
       if $ml2 {
          exec {'restart-httpd':
-            command => "/sbin/pcs resource restart httpd-clone --wait=2m",
+            command => "/sbin/pcs resource restart httpd-clone --wait=10m",
          }
       }
       
+      if !$ml2 {
+         exec {'restart-heat-engine':
+            command => "/sbin/pcs resource restart openstack-heat-engine-clone --wait=5m",
+         }
+         exec {'restart-heat-api':
+            command => "/sbin/pcs resource restart openstack-heat-api-clone --wait=5m",
+         }
+      }
+
       exec {'disable_openvswitch_plugin':
         command  => "/usr/sbin/pcs resource disable neutron-openvswitch-agent-clone",
         onlyif => "/usr/sbin/pcs resource show | grep -q neutron-openvswitch-agent-clone",
       }
+
       exec {'delete_openvswitch_plugin':
         command  => "/usr/sbin/pcs resource delete neutron-openvswitch-agent-clone",
         onlyif => "/usr/sbin/pcs resource show | grep -q neutron-openvswitch-agent-clone",

@@ -56,9 +56,11 @@ if $ctrlrs != "_not_there" {
        sync_db => $sync_db,
      } 
 
+     class {'apic_gbp::gbp_heat': }
+
      if $pacemaker_master {
        class { 'apic_gbp::service_restart': 
-         require => Class['neutron::plugins::apic_gbp', 'apic_gbp::opflex_agent'],
+         require => Class['neutron::plugins::apic_gbp', 'apic_gbp::opflex_agent', 'apic_gbp::gbp_heat'],
        }
      }
 
