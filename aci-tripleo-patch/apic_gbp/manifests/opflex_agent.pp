@@ -120,9 +120,15 @@ class apic_gbp::opflex_agent(
      require  => File['opflex_osnetconfig_yaml'],
    }
    
+   $intf_file = "/etc/sysconfig/network-scripts/ifcfg-$real_opflex_uplink_iface"
+   exec {'disable_peerdns':
+     command => "/bin/echo 'PEERDNS=no' >> $intf_file",
+     require => Exec['osnetconfig_fail'],
+   }
+
    setup_dhclient_file {'dummy':
      real_opflex_uplink_iface => $real_opflex_uplink_iface,
-     require => Exec['osnetconfig_fail'],
+     require => Exec['osnetconfig_fail', 'disable_peerdns'],
    }
 
    exec {'toggle_iface':
