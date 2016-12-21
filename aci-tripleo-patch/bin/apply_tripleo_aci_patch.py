@@ -35,7 +35,7 @@ sortkeylist = ['python-inotify-', 'python-meld3-', 'supervisor-', 'python-click-
 	'boost-chrono-', 'boost-context-', 'boost-date-time-', 'boost-filesystem-', 'boost-regex-',
 	'boost-graph-', 'boost-iostreams-', 'boost-locale-', 'boost-math-', 'boost-python-', 'boost-random-',
 	'boost-serialization-', 'boost-signals-', 'boost-test-', 'boost-thread-', 'boost-timer-', 'boost-wave-',
-	'boost-', 'lldpd-', 'libuv-', 'libopflex-', 'libmodelgbp-', 'openvswitch-gbp-lib-', 'agent-ovs-',
+	'boost-[0-9]+', 'lldpd-', 'libuv-', 'libopflex-', 'libmodelgbp-', 'openvswitch-gbp-lib-', 'agent-ovs-',
 	'neutron-opflex-agent-', 'neutron-ml2-driver-apic-', 'openstack-neutron-gbp-', 'python-gbpclient-',
 	'python-django-horizon-gbp-', 'openstack-dashboard-gbp-', 'openstack-heat-gbp-']
 otherlist = ['ncclient-', 'neutron-dvs-agent-', 'python-UcsSdk-', 'python-networking-cisco-']
