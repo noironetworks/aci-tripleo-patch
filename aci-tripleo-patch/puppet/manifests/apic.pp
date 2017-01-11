@@ -18,6 +18,11 @@ if $ctrlrs != "_not_there" {
        $sync_db = false
      }
   }
+
+  exec {'nm_restart':
+    command => "/sbin/service NetworkManager restart",
+    returns => [0,1],
+  }
    
   include ::neutron::params
   
