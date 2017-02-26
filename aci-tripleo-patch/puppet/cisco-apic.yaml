@@ -52,6 +52,9 @@ parameters:
   ACIOpflexOptimizedDhcp:
     type: boolean
     default: true
+  ACIEnableAIM:
+    type: boolean
+    default: false
   NeutronPassword:
     default: unset
     description: The password for the neutron service and db account, used by neutron agents.
@@ -72,9 +75,7 @@ parameters:
     default: ''
     description: comma separated string of switch id's which form vpc pairs. Example '101:102,103:104'
 
-
 resources:
-
   CiscoApicOpenstackConfig:
     type: OS::Heat::StructuredConfig
     properties:
@@ -102,10 +103,12 @@ resources:
                 neutron::plugins::ml2::cisco::apic_ml2::apic_entity_profile: {get_input: apic_aep}
                 neutron::plugins::ml2::cisco::apic_ml2::apic_l3out: {get_input: apic_l3out}
                 neutron::plugins::ml2::cisco::apic_ml2::apic_vpcpairs: {get_input: apic_vpcpairs}
-                neutron::plugins::ml2::cisco::apic_ml2:optimized_dhcp: {get_input: optimized_neutron_dhcp}
-                neutron::plugins::ml2::cisco::apic_ml2:optimized_metadata: {get_input: optimized_neutron_metadata}
+                neutron::plugins::ml2::cisco::apic_ml2::optimized_dhcp: {get_input: optimized_neutron_dhcp}
+                neutron::plugins::ml2::cisco::apic_ml2::optimized_metadata: {get_input: optimized_neutron_metadata}
+                neutron::plugins::ml2::cisco::apic_ml2::enable_aim: {get_input: enable_aim}
                 neutron::agents::metadata::auth_password: {get_input: neutron_password}
                 cisco::apic::opflex::neutron_mechanism: {get_input: opflex_neutron_mechanism}
+                cisco::apic::enable_aim: {get_input: enable_aim}
                 neutron::plugins::apic_gbp::apic_hosts: {get_input: apic_hosts}
                 neutron::plugins::apic_gbp::apic_username: {get_input: apic_username}
                 neutron::plugins::apic_gbp::apic_password: {get_input: apic_password}
@@ -114,8 +117,9 @@ resources:
                 neutron::plugins::apic_gbp::apic_entity_profile: {get_input: apic_aep}
                 neutron::plugins::apic_gbp::apic_l3out: {get_input: apic_l3out}
                 neutron::plugins::apic_gbp::apic_vpcpairs: {get_input: apic_vpcpairs}
-                neutron::plugins::apic_gbp:optimized_dhcp: {get_input: optimized_neutron_dhcp}
-                neutron::plugins::apic_gbp:optimized_metadata: {get_input: optimized_neutron_metadata}
+                neutron::plugins::apic_gbp::optimized_dhcp: {get_input: optimized_neutron_dhcp}
+                neutron::plugins::apic_gbp::optimized_metadata: {get_input: optimized_neutron_metadata}
+                neutron::plugins::apic_gbp::enable_aim: {get_input: enable_aim}
   CiscoApicOpenstackDeployment:
     type: OS::Heat::StructuredDeployment
     properties:
@@ -138,6 +142,7 @@ resources:
         optimized_neutron_dhcp: {get_param: ACIOpflexOptimizedDhcp}
         neutron_password: {get_param: NeutronPassword}
         opflex_neutron_mechanism: {get_param: ACIOpflexMechanism}
+        enable_aim: {get_param: ACIEnableAIM}
         apic_l3out: {get_param: ACIL3Out}
         apic_vpcpairs: {get_param: ACIVpcPairs}
 outputs:

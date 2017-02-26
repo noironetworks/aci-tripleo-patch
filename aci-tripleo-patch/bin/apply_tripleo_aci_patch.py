@@ -35,9 +35,10 @@ sortkeylist = ['python-inotify-', 'python-meld3-', 'supervisor-', 'python-click-
 	'boost-chrono-', 'boost-context-', 'boost-date-time-', 'boost-filesystem-', 'boost-regex-',
 	'boost-graph-', 'boost-iostreams-', 'boost-locale-', 'boost-math-', 'boost-python-', 'boost-random-',
 	'boost-serialization-', 'boost-signals-', 'boost-test-', 'boost-thread-', 'boost-timer-', 'boost-wave-',
-	'boost-[0-9]+', 'lldpd-', 'libuv-', 'libopflex-', 'libmodelgbp-', 'openvswitch-gbp-lib-', 'agent-ovs-',
+	'boost-[0-9]+', 'lldpd-', 'c-ares-', 'libev-', 'python2-tabulate-', 'python-websocket-client-', 'python-gevent-',
+        'libuv-', 'libopflex-', 'libmodelgbp-', 'openvswitch-gbp-lib-', 'agent-ovs-',
 	'neutron-opflex-agent-', 'neutron-ml2-driver-apic-', 'openstack-neutron-gbp-', 'python-gbpclient-',
-	'python-django-horizon-gbp-', 'openstack-dashboard-gbp-', 'openstack-heat-gbp-']
+	'python-django-horizon-gbp-', 'openstack-dashboard-gbp-', 'openstack-heat-gbp-', 'acitoolkit-', 'aci-integration-module-']
 otherlist = ['ncclient-', 'neutron-dvs-agent-', 'python-UcsSdk-', 'python-networking-cisco-']
 
 sortedlist = []
@@ -77,10 +78,10 @@ local_cmd("tar cf neutron.tar -C %s neutron" % tripleo_patch_dir, cwd=patch_dir)
 
 cmd = "virt-customize -a %s --upload apic_gbp.tar:/root/apic_gbp.tar --upload neutron.tar:/root/neutron.tar" % img_path
 
-    #cmd = cmd + " --upload mypuppet:/var/lib/heat-config/hooks/puppet "
-    #cmd = cmd + " --firstboot-command \"adduser test -p cN.aVzmFELPKQ\" "
-    #cmd = cmd + " --firstboot-command \" echo 'test ALL=(root) NOPASSWD:ALL' | tee -a /etc/sudoers.d/stack \" "
-    #cmd = cmd + " --firstboot-command \" chmod 0440 /etc/sudoers.d/stack \""
+#cmd = cmd + " --upload mypuppet:/var/lib/heat-config/hooks/puppet "
+#cmd = cmd + " --firstboot-command \"adduser test -p cN.aVzmFELPKQ\" "
+#cmd = cmd + " --firstboot-command \" echo 'test ALL=(root) NOPASSWD:ALL' | tee -a /etc/sudoers.d/stack \" "
+#cmd = cmd + " --firstboot-command \" chmod 0440 /etc/sudoers.d/stack \""
 cmd = cmd + " --firstboot-command \" yum -y remove python-networking-cisco \""
 for f in sortedlist:
    cmd = cmd + " --upload %s:/root/%s" % (f, os.path.basename(f))
