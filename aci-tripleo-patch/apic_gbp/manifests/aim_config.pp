@@ -76,7 +76,7 @@ class apic_gbp::aim_config(
   }
   
   $earr = split($apic_l3out, ',')
-  populate_extnet{$earr:;}
+  #populate_extnet{$earr:;}
 
 #### future 
 #   define add_switch_conn_to_aimctl_conf($sa) {

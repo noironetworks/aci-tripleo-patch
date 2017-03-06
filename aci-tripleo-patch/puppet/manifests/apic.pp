@@ -1,5 +1,6 @@
 
 $ctrlrs = hiera('controller_node_names', '_not_there')
+$use_lldp_discovery = hiera('neutron::plugins::apic_gbp::use_lldp_discovery')
 
 if $ctrlrs != "_not_there" {
   if $hostname in $ctrlrs {
@@ -62,13 +63,39 @@ if $ctrlrs != "_not_there" {
         }
      } else {
 
+        if $use_lldp_discovery {
+           $lldp_ensure = 'running'
+           $lldp_enabled = true
+           $host_agent_ensure = 'running'
+           $host_agent_enabled = true
+        } else {
+           $lldp_ensure = 'stopped'
+           $lldp_enabled = false
+           $host_agent_ensure = 'stopped'
+           $host_agent_enabled = false
+        }
+      
+        service { 'lldpd':
+          ensure      => $lldp_ensure,
+          enable      => $lldp_enabled,
+          hasstatus   => true,
+          hasrestart  => true,
+        }
+
+        service { 'neutron-cisco-apic-host-agent':
+          ensure      => $host_agent_ensure,
+          enable      => $host_agent_enabled,
+          hasstatus   => true,
+          hasrestart  => true,
+        }
+
         class { 'apic_gbp::opflex_agent': 
         }
    
         class {'apic_gbp::opflex_restart':
           require => Class['apic_gbp::opflex_agent'],
         }
-     }
+    }
 
   } else {
     #legacy stuff here  

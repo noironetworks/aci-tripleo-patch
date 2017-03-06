@@ -13,6 +13,8 @@ class apic_gbp::aim_neutron_config(
     ensure => $package_ensure,
   }
 
+  $use_lldp_discovery = hiera('neutron::plugins::apic_gbp::use_lldp_discovery')
+
   if $use_lldp_discovery {
      $lldp_ensure = 'running'
      $lldp_enabled = true
@@ -68,9 +70,9 @@ class apic_gbp::aim_neutron_config(
        require     => Package['cisco_apic_ml2_package'],
      }
 
-     $keystone_auth_url = hiera('neutron::server::notifications::auth_url')
+     $keystone_auth_url = hiera('keystone::endpoint::admin_url')
      $keystone_admin_username = 'admin'
-     $keystone_admin_password = hiera('neutron::keystone::auth::password')
+     $keystone_admin_password = hiera('keystone::roles::admin::password')
      neutron_config {
        'DEFAULT/apic_system_id':                  value => $apic_system_id;
        'DEFAULT/core_plugin':                     value => 'ml2plus';
@@ -88,6 +90,16 @@ class apic_gbp::aim_neutron_config(
    
      neutron_dhcp_agent_config {
        'DEFAULT/enable_isolated_metadata':        value => True;
+     }
+
+     $optimized_metadata = hiera('neutron::plugins::apic_gbp::optimized_metadata')
+
+     neutron_plugin_ml2 {
+       'ml2/type_drivers': value => "opflex,local,flat,vlan,gre,vxlan";
+       'ml2/tenant_network_types': value => "opflex";
+       'ml2/mechanism_drivers': value => "apic_aim";
+       'ml2/extension_drivers': value => "apic_aim";
+       'ml2_apic_aim/enable_optimized_metadata': value => $optimized_metadata;
      }
   }
 

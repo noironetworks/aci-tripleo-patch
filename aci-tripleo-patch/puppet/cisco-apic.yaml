@@ -41,6 +41,9 @@ parameters:
   ACIOpflexBridgeToPatch:
     type: string
     default: 'br-ex'
+  ACIUseLLDPDiscovery:
+    type: boolean
+    default: true
   ACIOpflexEncapMode:
     type: string
     default: 'vxlan'  
@@ -100,6 +103,7 @@ resources:
                 neutron::plugins::ml2::cisco::apic_ml2::apic_password: {get_input: apic_password}
                 neutron::plugins::ml2::cisco::apic_ml2::apic_system_id: {get_input: apic_system_id}
                 neutron::plugins::ml2::cisco::apic_ml2::encap_mode: {get_input: opflex_encap_mode}
+                neutron::plugins::ml2::cisco::apic_ml2::use_lldp_discovery: {get_input: lldp_discovery}
                 neutron::plugins::ml2::cisco::apic_ml2::apic_entity_profile: {get_input: apic_aep}
                 neutron::plugins::ml2::cisco::apic_ml2::apic_l3out: {get_input: apic_l3out}
                 neutron::plugins::ml2::cisco::apic_ml2::apic_vpcpairs: {get_input: apic_vpcpairs}
@@ -114,6 +118,7 @@ resources:
                 neutron::plugins::apic_gbp::apic_password: {get_input: apic_password}
                 neutron::plugins::apic_gbp::apic_system_id: {get_input: apic_system_id}
                 neutron::plugins::apic_gbp::encap_mode: {get_input: opflex_encap_mode}
+                neutron::plugins::apic_gbp::use_lldp_discovery: {get_input: lldp_discovery}
                 neutron::plugins::apic_gbp::apic_entity_profile: {get_input: apic_aep}
                 neutron::plugins::apic_gbp::apic_l3out: {get_input: apic_l3out}
                 neutron::plugins::apic_gbp::apic_vpcpairs: {get_input: apic_vpcpairs}
@@ -137,6 +142,7 @@ resources:
         apic_hosts: {get_param: ACIApicIp}
         apic_username: {get_param: ACIApicUser}
         apic_password: {get_param: ACIApicPassword}
+        lldp_discovery: {get_param: ACIUseLLDPDiscovery}
         apic_aep: {get_param: ACIApicEntityProfile}
         optimized_neutron_metadata: {get_param: ACIOpflexOptimizedMetadata}
         optimized_neutron_dhcp: {get_param: ACIOpflexOptimizedDhcp}
