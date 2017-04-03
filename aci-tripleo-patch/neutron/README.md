@@ -46,13 +46,11 @@ class { '::neutron':
     rabbit_host     => '127.0.0.1',
     rabbit_user     => 'neutron',
     rabbit_password => 'rabbit_secret',
-    verbose         => false,
     debug           => false,
 }
 
 # configure authentication
 class { 'neutron::server':
-    auth_host       => '127.0.0.1', # the keystone host address
     auth_password   => 'keystone_neutron_secret',
     sql_connection  => 'mysql://neutron:neutron_sql_secret@127.0.0.1/neutron?charset=utf8',
 }
@@ -99,12 +97,12 @@ neutron is a combination of Puppet manifest and ruby code to deliver configurati
 The `neutron_config` provider is a children of the ini_setting provider. It allows one to write an entry in the `/etc/neutron/neutron.conf` file.
 
 ```puppet
-neutron_config { 'DEFAULT/verbose' :
-  value => true,
+neutron_config { 'DEFAULT/core_plugin' :
+  value => openvswitch,
 }
 ```
 
-This will write `verbose=true` in the `[DEFAULT]` section.
+This will write `core_plugin=openvswitch` in the `[DEFAULT]` section.
 
 ##### name
 
@@ -159,7 +157,7 @@ Development
 
 The puppet-openstack modules follow the OpenStack development model. Developer documentation for the entire puppet-openstack project is at:
 
-* https://wiki.openstack.org/wiki/Puppet-openstack#Developerdocumentation
+* http://docs.openstack.org/developer/puppet-openstack-guide/
 
 Contributors
 ------------

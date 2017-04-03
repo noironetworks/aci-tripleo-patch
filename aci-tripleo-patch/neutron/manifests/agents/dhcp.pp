@@ -64,31 +64,25 @@
 #  (optional) Use broadcast in DHCP replies
 #  Defaults to $::os_service_default.
 #
-# [*availability_zone*]
-#   (optional) The availability zone of the agent.
-#   Neutron will only schedule dhcp on the agent based on availability zone
-#   Defaults to $::os_service_default
-#
 # [*purge_config*]
 #   (optional) Whether to set only the specified config options
 #   in the dhcp config.
 #   Defaults to false.
 #
-# === Deprecated Parameters
+# [*availability_zone*]
+#   (optional) The availability zone of the agent.
+#   Neutron will only schedule dhcp on the agent based on availability zone
+#   Defaults to $::os_service_default
 #
-# [*dhcp_delete_namespaces*]
-#   (optional) Deprecated. Delete namespace after removing a dhcp server
-#   Defaults to $::os_service_default.
+# [*ovs_integration_bridge*]
+#   (optional) Name of Open vSwitch bridge to use
+#   Defaults to $::os_service_default
+#
+# === Deprecated Parameters
 #
 # [*dhcp_domain*]
 #   (optional) Deprecated. Domain to use for building the hostnames
 #   Defaults to $::os_service_default
-#
-# [*use_namespaces*]
-#   (optional) Deprecated. 'True' value will be enforced in future releases.
-#   Allow overlapping IP (Must have kernel build with
-#   CONFIG_NET_NS=y and iproute2 package that supports namespaces).
-#   Defaults to $::os_service_default.
 #
 class neutron::agents::dhcp (
   $package_ensure           = present,
@@ -106,26 +100,20 @@ class neutron::agents::dhcp (
   $enable_force_metadata    = $::os_service_default,
   $enable_metadata_network  = false,
   $dhcp_broadcast_reply     = $::os_service_default,
-  $availability_zone        = $::os_service_default,
   $purge_config             = false,
+  $availability_zone        = $::os_service_default,
+  $ovs_integration_bridge   = $::os_service_default,
   # DEPRECATED PARAMETERS
-  $dhcp_delete_namespaces   = $::os_service_default,
   $dhcp_domain              = $::os_service_default,
-  $use_namespaces           = $::os_service_default,
 ) {
 
+  include ::neutron::deps
   include ::neutron::params
-
-  Neutron_config<||>            ~> Service['neutron-dhcp-service']
-  Neutron_dhcp_agent_config<||> ~> Service['neutron-dhcp-service']
 
   case $dhcp_driver {
     /\.Dnsmasq/: {
       Package[$::neutron::params::dnsmasq_packages] -> Package<| title == 'neutron-dhcp-agent' |>
       ensure_packages($::neutron::params::dnsmasq_packages)
-    }
-    /^midonet.*/: {
-      ensure_packages($::neutron::params::midonet_server_package)
     }
     default: {
       fail("Unsupported dhcp_driver ${dhcp_driver}")
@@ -160,37 +148,20 @@ class neutron::agents::dhcp (
     'DEFAULT/dhcp_broadcast_reply':   value => $dhcp_broadcast_reply;
     'DEFAULT/dnsmasq_config_file':    value => $dnsmasq_config_file;
     'DEFAULT/dnsmasq_dns_servers':    value => join(any2array($dnsmasq_dns_servers), ',');
+    'DEFAULT/ovs_integration_bridge': value => $ovs_integration_bridge;
     'AGENT/availability_zone':        value => $availability_zone;
-  }
-
-  if ! is_service_default ($dhcp_delete_namespaces) {
-    warning('The dhcp_delete_namespaces parameter was removed in Mitaka, it does not take any affect')
   }
 
   if ! is_service_default ($dhcp_domain) {
     warning('The dhcp_domain parameter is deprecated and will be removed in future releases')
   }
 
-  if ! is_service_default ($use_namespaces) {
-    warning('The use_namespaces parameter is deprecated and will be removed in future releases')
-    neutron_dhcp_agent_config {
-      'DEFAULT/use_namespaces':       value => $use_namespaces;
-    }
-  }
-
   if $::neutron::params::dhcp_agent_package {
-    Package['neutron']            -> Package['neutron-dhcp-agent']
-    Package['neutron-dhcp-agent'] -> Neutron_config<||>
-    Package['neutron-dhcp-agent'] -> Neutron_dhcp_agent_config<||>
     package { 'neutron-dhcp-agent':
       ensure => $package_ensure,
       name   => $::neutron::params::dhcp_agent_package,
       tag    => ['openstack', 'neutron-package'],
     }
-  } else {
-    # Some platforms (RedHat) do not provide a neutron DHCP agent package.
-    # The neutron DHCP agent config file is provided by the neutron package.
-    Package['neutron'] -> Neutron_dhcp_agent_config<||>
   }
 
   if $manage_service {
@@ -199,17 +170,12 @@ class neutron::agents::dhcp (
     } else {
       $service_ensure = 'stopped'
     }
-    Package['neutron'] ~> Service['neutron-dhcp-service']
-    if $::neutron::params::dhcp_agent_package {
-      Package['neutron-dhcp-agent'] ~> Service['neutron-dhcp-service']
-    }
   }
 
   service { 'neutron-dhcp-service':
-    ensure  => $service_ensure,
-    name    => $::neutron::params::dhcp_agent_service,
-    enable  => $enabled,
-    require => Class['neutron'],
-    tag     => 'neutron-service',
+    ensure => $service_ensure,
+    name   => $::neutron::params::dhcp_agent_service,
+    enable => $enabled,
+    tag    => 'neutron-service',
   }
 }

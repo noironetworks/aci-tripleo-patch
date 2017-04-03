@@ -1,5 +1,6 @@
 #
 class neutron::params {
+  include ::openstacklib::defaults
 
   if($::osfamily == 'Redhat') {
     $nobody_user_group    = 'nobody'
@@ -36,14 +37,13 @@ class neutron::params {
     # Add templated Cisco Nexus ML2 config to confdir
     $cisco_ml2_mech_cisco_nexus_config_file = '/etc/neutron/conf.d/neutron-server/ml2_mech_cisco_nexus.conf'
 
-    $cisco_apic_ml2_package = 'neutron-ml2-driver-apic'
-    $cisco_apic_config_file = '/etc/neutron/plugins/ml2/ml2_conf_cisco_apic.ini'
-
     $opencontrail_plugin_package = 'neutron-plugin-contrail'
     $opencontrail_config_file    = '/etc/neutron/plugins/opencontrail/ContrailPlugin.ini'
 
-    $midonet_server_package = 'python-neutron-plugin-midonet'
+    $midonet_server_package = 'python-networking-midonet'
     $midonet_config_file    = '/etc/neutron/plugins/midonet/midonet.ini'
+
+    $ovn_plugin_package = 'python-networking-ovn'
 
     $plumgrid_plugin_package    = 'networking-plumgrid'
     $plumgrid_pythonlib_package = 'plumgrid-pythonlib'
@@ -58,10 +58,7 @@ class neutron::params {
 
     $dnsmasq_packages   = ['dnsmasq', 'dnsmasq-utils']
 
-    $lbaas_agent_package = 'openstack-neutron-lbaas'
-    $lbaas_agent_service = 'neutron-lbaas-agent'
-
-    $lbaasv2_agent_package = false
+    $lbaasv2_agent_package = 'openstack-neutron-lbaas'
     $lbaasv2_agent_service = 'neutron-lbaasv2-agent'
 
     $haproxy_package   = 'haproxy'
@@ -88,9 +85,6 @@ class neutron::params {
     $cliff_package      = 'python-cliff'
 
     $kernel_headers     = "linux-headers-${::kernelrelease}"
-
-    $sqlite_package_name  = undef
-    $pymysql_package_name = undef
 
   } elsif($::osfamily == 'Debian') {
 
@@ -130,8 +124,10 @@ class neutron::params {
     $opencontrail_plugin_package = 'neutron-plugin-contrail'
     $opencontrail_config_file    = '/etc/neutron/plugins/opencontrail/ContrailPlugin.ini'
 
-    $midonet_server_package = 'python-neutron-plugin-midonet'
+    $midonet_server_package = 'python-networking-midonet'
     $midonet_config_file    = '/etc/neutron/plugins/midonet/midonet.ini'
+
+    $ovn_plugin_package = 'python-networking-ovn'
 
     $plumgrid_plugin_package    = 'networking-plumgrid'
     $plumgrid_pythonlib_package = 'plumgrid-pythonlib'
@@ -143,9 +139,6 @@ class neutron::params {
 
     $dhcp_agent_package = 'neutron-dhcp-agent'
     $dhcp_agent_service = 'neutron-dhcp-agent'
-
-    $lbaas_agent_package = 'neutron-lbaas-agent'
-    $lbaas_agent_service = 'neutron-lbaas-agent'
 
     $lbaasv2_agent_package = 'neutron-lbaasv2-agent'
     $lbaasv2_agent_service = 'neutron-lbaasv2-agent'
@@ -175,9 +168,6 @@ class neutron::params {
 
     $cliff_package      = 'python-cliff'
     $kernel_headers     = "linux-headers-${::kernelrelease}"
-
-    $sqlite_package_name  = 'python-pysqlite2'
-    $pymysql_package_name = 'python-pymysql'
   } else {
 
     fail("Unsupported osfamily ${::osfamily}")

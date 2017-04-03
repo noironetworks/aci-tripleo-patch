@@ -53,14 +53,6 @@
 #   in the metering config.
 #   Defaults to false.
 #
-# === Deprecated Parameters
-#
-# [*use_namespaces*]
-#   (optional) Deprecated. 'True' value will be enforced in future releases.
-#   Allow overlapping IP (Must have kernel build with
-#   CONFIG_NET_NS=y and iproute2 package that supports namespaces).
-#   Defaults to $::os_service_default.
-#
 
 class neutron::agents::metering (
   $package_ensure   = present,
@@ -72,14 +64,10 @@ class neutron::agents::metering (
   $measure_interval = $::os_service_default,
   $report_interval  = $::os_service_default,
   $purge_config     = false,
-  # DEPRECATED PARAMETERS
-  $use_namespaces   = $::os_service_default,
 ) {
 
+  include ::neutron::deps
   include ::neutron::params
-
-  Neutron_config<||>                ~> Service['neutron-metering-service']
-  Neutron_metering_agent_config<||> ~> Service['neutron-metering-service']
 
   resources { 'neutron_metering_agent_config':
     purge => $purge_config,
@@ -96,15 +84,7 @@ class neutron::agents::metering (
     'DEFAULT/report_interval':    value => $report_interval;
   }
 
-  if ! is_service_default ($use_namespaces) {
-    warning('The use_namespaces parameter is deprecated and will be removed in future releases')
-    neutron_metering_agent_config {
-      'DEFAULT/use_namespaces':   value => $use_namespaces;
-    }
-  }
-
   if $::neutron::params::metering_agent_package {
-    Package['neutron']            -> Package['neutron-metering-agent']
     package { 'neutron-metering-agent':
       ensure => $package_ensure,
       name   => $::neutron::params::metering_agent_package,
@@ -118,17 +98,12 @@ class neutron::agents::metering (
     } else {
       $service_ensure = 'stopped'
     }
-    Package['neutron'] ~> Service['neutron-metering-service']
-    if $::neutron::params::metering_agent_package {
-      Package['neutron-metering-agent'] ~> Service['neutron-metering-service']
-    }
   }
 
   service { 'neutron-metering-service':
-    ensure  => $service_ensure,
-    name    => $::neutron::params::metering_agent_service,
-    enable  => $enabled,
-    require => Class['neutron'],
-    tag     => 'neutron-service',
+    ensure => $service_ensure,
+    name   => $::neutron::params::metering_agent_service,
+    enable => $enabled,
+    tag    => 'neutron-service',
   }
 }

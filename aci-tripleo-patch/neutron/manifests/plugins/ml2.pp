@@ -107,12 +107,6 @@
 #   Repository. Should be an array of devices.
 #   Defaults to ['15b3:1004', '8086:10ca'] (Intel & Mellanox SR-IOV capable NICs)
 #
-# [*sriov_agent_required*]
-#   (optional) SRIOV neutron agent is required for port binding.
-#   Only set to true if SRIOV network adapters support VF link state setting
-#   and if admin state management is desired.
-#   Defaults to false.
-#
 # [*physical_network_mtus*]
 #   (optional) For L2 mechanism drivers, per-physical network MTU setting.
 #   Should be an array with 'physnetX1:9000'.
@@ -124,17 +118,27 @@
 #   encapsulated traffic is sent.
 #   Defaults to 0.
 #
-# [*max_header_size*]
-#   (optional) Geneve encapsulation header size is dynamic, this value is used to calculate
-#   the maximum MTU for the driver.
-#   Defaults to $::os_service_default
-#
 # [*purge_config*]
 #   (optional) Whether to set only the specified config options
 #   in the ml2 config.
 #   Defaults to false.
 #
-
+# [*max_header_size*]
+#   (optional) Geneve encapsulation header size is dynamic, this value is used to calculate
+#   the maximum MTU for the driver.
+#   Defaults to $::os_service_default
+#
+# [*overlay_ip_version*]
+#   (optional) Configures the IP version used for all overlay network endpoints. Valid values
+#   are 4 and 6.
+#   Defaults to $::os_service_default
+#
+# DEPRECATED PARAMETERS
+#
+# [*sriov_agent_required*]
+#   (optional) Deprecated.
+#   Defaults to undef.
+#
 class neutron::plugins::ml2 (
   $type_drivers              = ['local', 'flat', 'vlan', 'gre', 'vxlan'],
   $extension_drivers         = $::os_service_default,
@@ -149,16 +153,17 @@ class neutron::plugins::ml2 (
   $firewall_driver           = $::os_service_default,
   $package_ensure            = 'present',
   $supported_pci_vendor_devs = ['15b3:1004', '8086:10ca'],
-  $sriov_agent_required      = false,
   $physical_network_mtus     = $::os_service_default,
   $path_mtu                  = 0,
-  $max_header_size           = $::os_service_default,
   $purge_config              = false,
+  $max_header_size           = $::os_service_default,
+  $overlay_ip_version        = $::os_service_default,
+  # DEPRECATED PARAMETERS
+  $sriov_agent_required      = undef,
 ) {
 
+  include ::neutron::deps
   include ::neutron::params
-
-  Neutron_plugin_ml2<||> ~> Service<| title == 'neutron-server' |>
 
   if ! $mechanism_drivers {
     warning('Without networking mechanism driver, ml2 will not communicate with L2 agents')
@@ -168,29 +173,32 @@ class neutron::plugins::ml2 (
     warning('Security groups will not work without properly set firewall_driver')
   }
 
+  if !is_service_default($overlay_ip_version) and !($overlay_ip_version in [4, 6]) {
+    fail('Invalid IP version for overlay_ip_version')
+  }
+
   if $::operatingsystem == 'Ubuntu' {
     file_line { '/etc/default/neutron-server:NEUTRON_PLUGIN_CONFIG':
-      path    => '/etc/default/neutron-server',
-      match   => '^NEUTRON_PLUGIN_CONFIG=(.*)$',
-      line    => 'NEUTRON_PLUGIN_CONFIG=/etc/neutron/plugin.ini',
-      require => File['/etc/default/neutron-server','/etc/neutron/plugin.ini'],
+      path  => '/etc/default/neutron-server',
+      match => '^NEUTRON_PLUGIN_CONFIG=(.*)$',
+      line  => 'NEUTRON_PLUGIN_CONFIG=/etc/neutron/plugin.ini',
+      tag   => 'neutron-file-line'
     }
-    Package<| title == 'neutron-server' |>
-    -> File_line['/etc/default/neutron-server:NEUTRON_PLUGIN_CONFIG']
-    ~> Service<| title == 'neutron-server' |>
   }
 
   # In RH, the link is used to start Neutron process but in Debian, it's used only
   # to manage database synchronization.
   file {'/etc/neutron/plugin.ini':
     ensure => link,
-    target => '/etc/neutron/plugins/ml2/ml2_conf.ini'
+    target => '/etc/neutron/plugins/ml2/ml2_conf.ini',
+    tag    => 'neutron-config-file',
   }
   file {'/etc/default/neutron-server':
     ensure => present,
     owner  => 'root',
     group  => 'root',
-    mode   => '0644'
+    mode   => '0644',
+    tag    => 'neutron-config-file',
   }
 
   # Some platforms do not have a dedicated ml2 plugin package
@@ -198,15 +206,8 @@ class neutron::plugins::ml2 (
     package { 'neutron-plugin-ml2':
       ensure => $package_ensure,
       name   => $::neutron::params::ml2_server_package,
-      tag    => 'openstack',
+      tag    => ['neutron-package', 'openstack'],
     }
-    Package['neutron-plugin-ml2'] -> File['/etc/neutron/plugin.ini']
-    Package['neutron-plugin-ml2'] -> File['/etc/default/neutron-server']
-    Package['neutron-plugin-ml2'] -> Neutron_plugin_sriov<||>
-  } else {
-    Package['neutron'] -> File['/etc/neutron/plugin.ini']
-    Package['neutron'] -> File['/etc/default/neutron-server']
-    Package['neutron'] -> Neutron_plugin_sriov<||>
   }
 
   resources { 'neutron_plugin_ml2':
@@ -222,9 +223,12 @@ class neutron::plugins::ml2 (
     max_header_size     => $max_header_size
   }
 
+  if $sriov_agent_required {
+    warning ('sriov_agent_required is deprecated, has no effect and will be removed in a future release.')
+  }
+
   neutron::plugins::ml2::mech_driver { $mechanism_drivers:
     supported_pci_vendor_devs => $supported_pci_vendor_devs,
-    sriov_agent_required      => $sriov_agent_required,
   }
 
   neutron_plugin_ml2 {
@@ -233,6 +237,7 @@ class neutron::plugins::ml2 (
     'ml2/mechanism_drivers':                value => join(any2array($mechanism_drivers), ',');
     'ml2/path_mtu':                         value => $path_mtu;
     'ml2/extension_drivers':                value => join(any2array($extension_drivers), ',');
+    'ml2/overlay_ip_version':               value => $overlay_ip_version;
     'securitygroup/enable_security_group':  value => $enable_security_group;
     'securitygroup/firewall_driver':        value => $firewall_driver;
   }
@@ -246,5 +251,5 @@ class neutron::plugins::ml2 (
     neutron_plugin_ml2 {
       'ml2/physical_network_mtus': value => join($physical_network_mtus, ',');
     }
-  } Neutron_plugin_ml2<||> ~> Exec<| title == 'neutron-db-sync' |>
+  }
 }

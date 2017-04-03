@@ -21,7 +21,7 @@
 #   (optional) Defaults to 'neutron.agent.linux.interface.OVSInterfaceDriver'.
 #
 # [*device_driver*]
-#   (optional) Defaults to 'neutron_lbaas.services.loadbalancer.drivers.haproxy.namespace_driver.HaproxyNSDriver'.
+#   (optional) Defaults to 'neutron_lbaas.drivers.haproxy.namespace_driver.HaproxyNSDriver'.
 #
 # [*user_group*]
 #   (optional) The user group.
@@ -32,26 +32,22 @@
 #   Disable this if you are using the puppetlabs-haproxy module
 #   Defaults to true
 #
-# [*enable_v1*]
-#   (optional) Whether to use lbaas v1 agent or not.
-#   Defaults to true
-#
-# [*enable_v2*]
-#   (optional) Whether to use lbaas v2 agent or not.
-#   Defaults to false
-#
 # [*purge_config*]
 #   (optional) Whether to set only the specified config options
 #   in the lbaas config.
 #   Defaults to false.
 #
-# === Deprecated Parameters
+# DEPRECATED PARAMETERS
 #
-# [*use_namespaces*]
-#   (optional) Deprecated. 'True' value will be enforced in future releases.
-#   Allow overlapping IP (Must have kernel build with
-#   CONFIG_NET_NS=y and iproute2 package that supports namespaces).
-#   Defaults to $::os_service_default.
+# [*enable_v1*]
+#   (optional) Whether to use lbaas v1 agent or not.
+#   Deprecated. Will be removed in Ocata.
+#   Defaults to undef
+#
+# [*enable_v2*]
+#   (optional) Whether to use lbaas v2 agent or not.
+#   Deprecated. Will be removed in Ocata.
+#   Defaults to undef
 #
 class neutron::agents::lbaas (
   $package_ensure         = present,
@@ -59,28 +55,25 @@ class neutron::agents::lbaas (
   $manage_service         = true,
   $debug                  = $::os_service_default,
   $interface_driver       = 'neutron.agent.linux.interface.OVSInterfaceDriver',
-  $device_driver          = 'neutron_lbaas.services.loadbalancer.drivers.haproxy.namespace_driver.HaproxyNSDriver',
+  $device_driver          = 'neutron_lbaas.drivers.haproxy.namespace_driver.HaproxyNSDriver',
   $user_group             = $::neutron::params::nobody_user_group,
   $manage_haproxy_package = true,
-  $enable_v1              = true,
-  $enable_v2              = false,
   $purge_config           = false,
   # DEPRECATED PARAMETERS
-  $use_namespaces         = $::os_service_default,
+  $enable_v1              = undef,
+  $enable_v2              = undef,
 ) {
 
+  include ::neutron::deps
   include ::neutron::params
 
-  Neutron_config<||>             ~> Service['neutron-lbaas-service']
-  Neutron_lbaas_agent_config<||> ~> Service['neutron-lbaas-service']
-
-  if $enable_v1 and $enable_v2 {
-    fail('neutron agents LBaaS enable_v1 and enable_v2 parameters cannot both be true')
+  if $enable_v1 or $enable_v2 {
+    warning('enable_v1 and enable_v2 parameters are deprecated and will be removed in Ocata.')
   }
 
   case $device_driver {
     /\.haproxy/: {
-      Package <| title == $::neutron::params::haproxy_package |> -> Package <| title == 'neutron-lbaas-agent' |>
+      Package <| title == $::neutron::params::haproxy_package |> -> Package <| title == 'neutron-lbaasv2-agent' |>
       if $manage_haproxy_package {
         ensure_packages([$::neutron::params::haproxy_package])
       }
@@ -104,55 +97,23 @@ class neutron::agents::lbaas (
     'haproxy/user_group':         value => $user_group;
   }
 
-  if ! is_service_default ($use_namespaces) {
-    warning('The use_namespaces parameter is deprecated and will be removed in future releases')
-    neutron_lbaas_agent_config {
-      'DEFAULT/use_namespaces':   value => $use_namespaces;
-    }
-  }
-
-  Package['neutron'] -> Package['neutron-lbaas-agent']
-  ensure_resource( 'package', 'neutron-lbaas-agent', {
+  Package['neutron'] -> Package['neutron-lbaasv2-agent']
+  ensure_resource( 'package', 'neutron-lbaasv2-agent', {
     ensure => $package_ensure,
-    name   => $::neutron::params::lbaas_agent_package,
+    name   => $::neutron::params::lbaasv2_agent_package,
     tag    => ['openstack', 'neutron-package'],
   })
-  if $::osfamily == 'Debian' {
-    ensure_packages(['neutron-lbaasv2-package'], {
-      ensure => $package_ensure,
-      name   => $::neutron::params::lbaasv2_agent_package,
-      tag    => ['openstack', 'neutron-package'],
-    })
-    Package['neutron'] -> Package['neutron-lbaasv2-package']
-  }
-  if $manage_service {
-    if $enable_v1 {
-      $service_v1_ensure = 'running'
-      $service_v2_ensure = 'stopped'
-    } elsif $enable_v2 {
-      $service_v1_ensure = 'stopped'
-      $service_v2_ensure = 'running'
-    } else {
-      $service_v1_ensure = 'stopped'
-      $service_v2_ensure = 'stopped'
-    }
-    Package['neutron'] ~> Service['neutron-lbaas-service']
-    Package['neutron-lbaas-agent'] ~> Service['neutron-lbaas-service']
-  }
 
-  service { 'neutron-lbaas-service':
-    ensure  => $service_v1_ensure,
-    name    => $::neutron::params::lbaas_agent_service,
-    enable  => $enable_v1,
-    require => Class['neutron'],
-    tag     => 'neutron-service',
+  if $manage_service {
+    $service_ensure = 'running'
+    } else {
+    $service_ensure = 'stopped'
   }
 
   service { 'neutron-lbaasv2-service':
-    ensure  => $service_v2_ensure,
-    name    => $::neutron::params::lbaasv2_agent_service,
-    enable  => $enable_v2,
-    require => Class['neutron'],
-    tag     => 'neutron-service',
+    ensure => $service_ensure,
+    name   => $::neutron::params::lbaasv2_agent_service,
+    enable => $enabled,
+    tag    => 'neutron-service',
   }
 }

@@ -26,92 +26,27 @@
 # [*log_dir*]
 #   REMOVED: Use log_dir of neutron class instead.
 #
-# [*auth_type*]
-#   (optional) What auth system to use
-#   Defaults to 'keystone'. Can other be 'noauth'
-#
-# [*keystone_auth_type*]
-#   (optional) An authentication plugin to use with an OpenStack Identity server.
-#   Defaults to 'password'
-#
-# [*auth_uri*]
-#   (optional) Complete public Identity API endpoint.
-#   Defaults to: 'http://localhost:5000/'
-#
-# [*auth_url*]
-#   (optional) Authorization URL.
-#   If version independent identity plugin is used available versions will be
-#   determined using auth_url
-#   Defaults to 'http://localhost:35357'
-#
-# [*username*]
-#   (optional) The name of the auth user
-#   Defaults to 'neutron'
-#
-# [*password*]
-#   The password to use for authentication (keystone)
-#   Either password or auth_password is required
-#
-# [*tenant_name*]
-#   (optional) The tenant of the auth user
-#   Defaults to 'services'
-#
-# [*project_domain_id*]
-#   (optional) Auth user project's domain ID
-#   Defaults to 'Default'
-#
-# [*project_name*]
-#   (optional) Auth user project's name
-#   Defaults to 'services'
-#
-# [*user_domain_id*]
-#   (optional) Auth user's domain ID
-#   Defaults to 'Default'
-#
-# [*region_name*]
-#   (optional) The authentication region
-#   Defaults to $::os_service_default
-#
 # [*database_connection*]
 #   (optional) Connection url for the neutron database.
 #   (Defaults to undef)
 #
-# [*sql_connection*]
-#   DEPRECATED: Use database_connection instead.
-#
-# [*connection*]
-#   DEPRECATED: Use database_connection instead.
+# [*memcached_servers*]
+#   (optinal) a list of memcached server(s) to use for caching. If left
+#   undefined, tokens will instead be cached in-process.
+#   Defaults to $::os_service_default.
 #
 # [*database_max_retries*]
 #   (optional) Maximum database connection retries during startup.
 #   (Defaults to undef)
-#
-# [*sql_max_retries*]
-#   DEPRECATED: Use database_max_retries instead.
-#
-# [*max_retries*]
-#   DEPRECATED: Use database_max_retries instead.
 #
 # [*database_idle_timeout*]
 #   (optional) Timeout before idle database connections are reaped.
 #   Deprecates sql_idle_timeout
 #   (Defaults to undef)
 #
-# [*sql_idle_timeout*]
-#   DEPRECATED: Use database_idle_timeout instead.
-#
-# [*idle_timeout*]
-#   DEPRECATED: Use database_idle_timeout instead.
-#
 # [*database_retry_interval*]
 #   (optional) Interval between retries of opening a database connection.
 #   (Defaults to 10)
-#
-# [*sql_reconnect_interval*]
-#   DEPRECATED: Use database_retry_interval instead.
-#
-# [*retry_interval*]
-#   DEPRECATED: Use database_retry_interval instead.
 #
 # [*database_min_pool_size*]
 #   (optional) Minimum number of SQL connections to keep open in a pool.
@@ -209,6 +144,11 @@
 #   admin_state_up set to True to alive agents.
 #   Defaults to $::os_service_default
 #
+# [*allow_automatic_dhcp_failover*]
+#   (optional) Allow automatic rescheduling of dhcp from dead dhcp agents with
+#   admin_state_up set to True to alive agents.
+#   Defaults to $::os_service_default
+#
 # [*l3_ha*]
 #   (optional) Enable high availability for virtual routers.
 #   Defaults to false
@@ -216,10 +156,6 @@
 # [*max_l3_agents_per_router*]
 #   (optional) Maximum number of l3 agents which a HA router will be scheduled on. If set to '0', a router will be scheduled on every agent.
 #   Defaults to '3'
-#
-# [*min_l3_agents_per_router*]
-#   (optional) Minimum number of l3 agents which a HA router will be scheduled on.
-#   Defaults to '2'
 #
 # [*l3_ha_net_cidr*]
 #   (optional) CIDR of the administrative network if HA mode is enabled.
@@ -233,6 +169,10 @@
 #   (optional) Drivers list to use to send the update notification
 #   Defaults to $::os_service_default.
 #
+# [*network_auto_schedule*]
+#   (optional) Allow auto scheduling networks to DHCP agent
+#   Defaults to $::os_service_default.
+#
 # [*ensure_vpnaas_package*]
 #   (optional) Ensures installation of VPNaaS package before starting API service.
 #   Set to true to ensure installation of the package that is required to start neutron service if service_plugin is enabled.
@@ -240,11 +180,6 @@
 #
 # [*ensure_fwaas_package*]
 #   (optional) Ensures installation of FWaaS package before starting API service.
-#   Set to true to ensure installation of the package that is required to start neutron service if service_plugin is enabled.
-#   Defaults to false.
-#
-# [*ensure_lbaas_package*]
-#   (optional) Ensures installation of LBaaS package before starting API service.
 #   Set to true to ensure installation of the package that is required to start neutron service if service_plugin is enabled.
 #   Defaults to false.
 #
@@ -269,55 +204,88 @@
 #     ]
 #   }
 #
+# [*auth_strategy*]
+#   (optional) The strategy to use for authentication.
+#   Defaults to 'keystone'
+#
+# [*enable_proxy_headers_parsing*]
+#   (Optional) Enable paste middleware to handle SSL requests through
+#   HTTPProxyToWSGI middleware.
+#   Defaults to $::os_service_default.
+#
 # === Deprecated Parameters
 #
-# [*identity_uri*]
-#   Deprecated. Auth plugins based authentication should be used instead
-#   (optional) Complete admin Identity API endpoint.
-#   Defaults to: 'http://localhost:35357/'
+# [*ensure_lbaas_package*]
+#   Deprecated. Ensures installation of LBaaS package.
+#   LBaaS agent should be installed from neutron::agents::lbaas.
+#   Defaults to false.
 #
-# [*auth_region*]
-#   Deprecated. Auth plugins based authentication should be used instead
-#   (optional) The authentication region. Note this value is case-sensitive and
-#   must match the endpoint region defined in Keystone.
+# [*min_l3_agents_per_router*]
+#   Deprecated. (optional) Minimum number of l3 agents which a HA router will be scheduled on.
+#   Defaults to undef
+#
+# [*keystone_auth_type*]
+#   (optional) Deprecated Use neutron::keystone::authtoken::auth_type instead.
+#   Defaults to undef
+#
+# [*auth_uri*]
+#   (optional) Deprecated Use neutron::keystone::authtoken::auth_uri
+#   Defaults to undef
+#
+# [*auth_url*]
+#   (optional) Deprecated Use neutron::keystone::authtoken::auth_url instead
+#   Defaults to undef
+#
+# [*username*]
+#   (optional) Deprecated Use neutron::keystone::authtoken::username instead
+#   Defaults to undef
+#
+# [*password*]
+#   (optional) Deprecated Use neutron::keystone::authtoken::password
+#   Defaults to undef
+#
+# [*project_domain_id*]
+#   Deprecated. Auth user project's domain ID
 #   Defaults to $::os_service_default
 #
-# [*auth_tenant*]
-#   Deprecated. Auth plugins based authentication should be used instead
-#   (optional) The tenant of the auth user
-#   Defaults to services
+# [*project_domain_name*]
+#   (optional) Deprecated
+#   Use neutron::keystone::authtoken::project_domain_name instead
+#   Defaults to undef
 #
-# [*auth_user*]
-#   Deprecated. Auth plugins based authentication should be used instead
-#   (optional) The name of the auth user
-#   Defaults to neutron
+# [*project_name*]
+#   (optional) Deprecated Use neutron::keystone::authtoken::project_name
+#   instead
+#   Defaults to undef
 #
-# [*auth_password*]
-#   Deprecated. Auth plugins based authentication should be used instead
-#   (optional) The password to use for authentication (keystone)
-#   Defaults to false. Set a value unless you are using noauth
+# [*user_domain_id*]
+#   (optional) Deprecated Use neutron::keystone::authtoken::
+#   Defaults to $::os_service_default
 #
-# [*auth_plugin*]
-#   Deprecated. keystone_auth_type should be used instead
-#   An authentication plugin to use with an OpenStack Identity server.
-#   Defaults to $::os_service_plugin
+# [*user_domain_name*]
+#   (optional) Deprecated Use neutron::keystone::authtoken::user_domain_name
+#   instead
+#   Defaults to undef
+#
+# [*region_name*]
+#   (optional) Deprecated Use neutron::keystone::authtoken::region_name
+#   instead.
+#   Defaults to undef
+#
+# [*memcached_servers*]
+#   (optional) Deprecated Use neutron::keystone::authtoken::memcached_servers
+#   instead
+#   Defaults to undef
+#
+# [*auth_type*]
+#   (optional) Deprecated Use auth_strategy instead.
+#   Defaults to undef
 #
 class neutron::server (
   $package_ensure                   = 'present',
   $enabled                          = true,
   $manage_service                   = true,
   $service_name                     = $::neutron::params::server_service,
-  $auth_type                        = 'keystone',
-  $keystone_auth_type               = 'password',
-  $auth_uri                         = 'http://localhost:5000/',
-  $auth_url                         = 'http://localhost:35357/',
-  $username                         = 'neutron',
-  $password                         = false,
-  $tenant_name                      = 'services',
-  $region_name                      = $::os_service_default,
-  $project_domain_id                = 'Default',
-  $project_name                     = 'services',
-  $user_domain_id                   = 'Default',
   $database_connection              = undef,
   $database_max_retries             = undef,
   $database_idle_timeout            = undef,
@@ -335,41 +303,107 @@ class neutron::server (
   $dhcp_load_type                   = $::os_service_default,
   $default_availability_zones       = $::os_service_default,
   $allow_automatic_l3agent_failover = $::os_service_default,
+  $allow_automatic_dhcp_failover    = $::os_service_default,
   $l3_ha                            = false,
   $max_l3_agents_per_router         = 3,
-  $min_l3_agents_per_router         = 2,
   $l3_ha_net_cidr                   = $::os_service_default,
   $qos_notification_drivers         = $::os_service_default,
+  $network_auto_schedule            = $::os_service_default,
   $ensure_vpnaas_package            = false,
   $ensure_fwaas_package             = false,
-  $ensure_lbaas_package             = false,
   $vpnaas_agent_package             = false,
   $service_providers                = $::os_service_default,
+  $auth_strategy                    = 'keystone',
+  $enable_proxy_headers_parsing     = $::os_service_default,
   # DEPRECATED PARAMETERS
   $log_dir                          = undef,
   $log_file                         = undef,
   $report_interval                  = undef,
   $state_path                       = undef,
   $lock_path                        = undef,
-  $auth_password                    = false,
-  $auth_region                      = $::os_service_default,
-  $auth_tenant                      = 'services',
-  $auth_user                        = 'neutron',
-  $identity_uri                     = 'http://localhost:35357/',
-  $auth_plugin                      = $::os_service_default,
+  $ensure_lbaas_package             = false,
+  $min_l3_agents_per_router         = undef,
+  $keystone_auth_type               = undef,
+  $auth_uri                         = undef,
+  $auth_url                         = undef,
+  $username                         = undef,
+  $password                         = undef,
+  $region_name                      = undef,
+  $project_domain_name              = undef,
+  $project_name                     = undef,
+  $user_domain_name                 = undef,
+  $memcached_servers                = undef,
+  $project_domain_id                = $::os_service_default,
+  $user_domain_id                   = $::os_service_default,
+  $auth_type                        = undef,
 ) inherits ::neutron::params {
 
+  include ::neutron::deps
   include ::neutron::db
   include ::neutron::policy
   # Work-around LP#1551974. neutron requires the keystoneclient to auth tokens
   include ::keystone::client
+
+  if $auth_type {
+    warning('neutron::server::auth_type is deprecated, use neutron::server::auth_strategy instead.')
+  }
+
+  if $keystone_auth_type {
+    warning('neutron::server::keystone_auth_type is deprecated, use neutron::keystone::authtoken::auth_type instead.')
+  }
+
+  if $auth_uri {
+    warning('neutron::server::auth_uri is deprecated, use neutron::keystone::authtoken::auth_uri instead.')
+  }
+
+  if $auth_url {
+    warning('neutron::server::auth_url is deprecated, use neutron::keystone::authtoken::auth_url instead.')
+  }
+
+  if $username {
+    warning('neutron::server::username is deprecated, use neutron::keystone::authtoken::username instead.')
+  }
+
+  if $password {
+    warning('neutron::server::password is deprecated, use neutron::keystone::authtoken::password instead.')
+  }
+
+  if ! is_service_default($project_domain_id) {
+    warning('neutron::server::project_domain_id is deprecated, use neutron::keystone::authtoken::project_domain_name instead.')
+  }
+
+  if $project_domain_name {
+    warning('neutron::server::project_domain_name is deprecated, use neutron::keystone::authtoken::project_domain_name instead.')
+  }
+
+  if $project_name {
+    warning('neutron::server::project_name is deprecated, use neutron::keystone::authtoken::project_name instead.')
+  }
+
+  if ! is_service_default($user_domain_id) {
+    warning('neutron::server::user_domain_id is deprecated, use neutron::keystone::authtoken::user_domain_name instead.')
+  }
+
+  if $user_domain_name {
+    warning('neutron::server::user_domain_name is deprecated, use neutron::keystone::authtoken::user_domain_name instead.')
+  }
+
+  if $region_name {
+    warning('neutron::server::region_name is deprecated, use neutron::keystone::authtoken::region_name instead.')
+  }
+
+  if $memcached_servers {
+    warning('neutron::server::memcached_servers is deprecated, use neutron::keystone::authtoken::memcached_servers instead')
+  }
 
   if !is_service_default($default_availability_zones) {
     validate_array($default_availability_zones)
   }
 
   if !is_service_default($dhcp_load_type) {
-    validate_re($dhcp_load_type, ['^networks$', '^subnets$', '^ports$'], 'Must pass either networks, subnets, or ports as values for dhcp_load_type')
+    validate_re($dhcp_load_type,
+                ['^networks$', '^subnets$', '^ports$'],
+                'Must pass either networks, subnets, or ports as values for dhcp_load_type')
   }
 
   if !is_service_default($service_providers) {
@@ -411,53 +445,37 @@ class neutron::server (
   }
 
   if $ensure_lbaas_package {
-    ensure_resource( 'package', 'neutron-lbaas-agent', {
+    warning('$ensure_lbaas_package is deprecated. To install lbaas agent the neutron::agents::lbaas class should be used.')
+    ensure_resource( 'package', 'neutron-lbaasv2-agent', {
       'ensure' => $package_ensure,
-      'name'   => $::neutron::params::lbaas_agent_package,
+      'name'   => $::neutron::params::lbaasv2_agent_package,
       'tag'    => ['openstack', 'neutron-package'],
     })
   }
-
-
-
-  Neutron_config<||>     ~> Service['neutron-server']
-  Neutron_api_config<||> ~> Service['neutron-server']
-  Neutron_lbaas_service_config<||> ~> Service['neutron-server']
-  Class['neutron::policy'] ~> Service['neutron-server']
-  Neutron_config<||> -> Neutron_network<||>
-
-  if $l3_ha {
-    if $min_l3_agents_per_router <= $max_l3_agents_per_router or $max_l3_agents_per_router == 0 {
-      neutron_config {
-        'DEFAULT/l3_ha':                    value => true;
-        'DEFAULT/max_l3_agents_per_router': value => $max_l3_agents_per_router;
-        'DEFAULT/min_l3_agents_per_router': value => $min_l3_agents_per_router;
-        'DEFAULT/l3_ha_net_cidr':           value => $l3_ha_net_cidr;
-      }
-    } else {
-      fail('min_l3_agents_per_router should be less than or equal to max_l3_agents_per_router.')
-    }
-  } else {
-      neutron_config {
-        'DEFAULT/l3_ha':                    value => false;
-      }
-  }
-
 
   if $sync_db {
     include ::neutron::db::sync
   }
 
+  if $min_l3_agents_per_router {
+    warning('min_l3_agents_per_router is deprecated, has no effect and will be removed for the Ocata release.')
+  }
+
   neutron_config {
+    'DEFAULT/l3_ha':                            value => $l3_ha;
+    'DEFAULT/max_l3_agents_per_router':         value => $max_l3_agents_per_router;
+    'DEFAULT/l3_ha_net_cidr':                   value => $l3_ha_net_cidr;
     'DEFAULT/api_workers':                      value => $api_workers;
     'DEFAULT/rpc_workers':                      value => $rpc_workers;
     'DEFAULT/agent_down_time':                  value => $agent_down_time;
     'DEFAULT/router_scheduler_driver':          value => $router_scheduler_driver;
     'DEFAULT/router_distributed':               value => $router_distributed;
     'DEFAULT/allow_automatic_l3agent_failover': value => $allow_automatic_l3agent_failover;
+    'DEFAULT/allow_automatic_dhcp_failover':    value => $allow_automatic_dhcp_failover;
     'DEFAULT/network_scheduler_driver':         value => $network_scheduler_driver;
     'DEFAULT/dhcp_load_type':                   value => $dhcp_load_type;
     'DEFAULT/default_availability_zones':       value => join(any2array($default_availability_zones), ',');
+    'DEFAULT/network_auto_schedule':            value => $network_auto_schedule;
     'service_providers/service_provider':       value => $service_providers;
   }
 
@@ -486,96 +504,33 @@ class neutron::server (
   neutron_config { 'qos/notification_drivers': value => join(any2array($qos_notification_drivers), ',') }
 
   if ($::neutron::params::server_package) {
-    Package['neutron-server'] -> Neutron_api_config<||>
-    Package['neutron-server'] -> Neutron_config<||>
-    Package['neutron-server'] -> Neutron_lbaas_service_config<||>
-    Package['neutron-server'] -> Service['neutron-server']
-    Package['neutron-server'] -> Class['neutron::policy']
     package { 'neutron-server':
       ensure => $package_ensure,
       name   => $::neutron::params::server_package,
       tag    => ['openstack', 'neutron-package'],
     }
-  } else {
-    # Some platforms (RedHat) does not provide a neutron-server package.
-    # The neutron api config file is provided by the neutron package.
-    Package['neutron'] -> Class['neutron::policy']
-    Package['neutron'] -> Neutron_api_config<||>
   }
 
   neutron_config {
     'DEFAULT/auth_type': value => $auth_type;
   }
 
-  if ($auth_type == 'keystone') {
+  $auth_strategy_real = pick($auth_type, $auth_strategy)
+  if ($auth_strategy_real == 'keystone') {
 
-    if ($auth_password == false) and ($password == false) {
-      fail('Either auth_password or password must be set when using keystone authentication.')
-    } elsif ($auth_password != false) and ($password != false) {
-      fail('auth_password and password must not be used together.')
-    } else {
-      neutron_config {
-        'keystone_authtoken/auth_uri':     value => $auth_uri;
-      }
-      neutron_api_config {
-        'filter:authtoken/auth_uri':     value => $auth_uri;
-      }
+    include ::neutron::keystone::authtoken
+
+    neutron_api_config {
+      'filter:authtoken/admin_tenant_name':   ensure => absent;
+      'filter:authtoken/admin_user':          ensure => absent;
+      'filter:authtoken/admin_password':      ensure => absent;
+      'filter:authtoken/identity_uri':        ensure => absent;
     }
 
-    if $auth_password {
+  }
 
-      warning('identity_uri, auth_tenant, auth_user, auth_password, auth_region configuration options are deprecated in favor of auth_plugin and related options')
-      neutron_config {
-        'keystone_authtoken/admin_tenant_name': value => $auth_tenant;
-        'keystone_authtoken/admin_user':        value => $auth_user;
-        'keystone_authtoken/admin_password':    value => $auth_password, secret => true;
-        'keystone_authtoken/auth_region':       value => $auth_region;
-        'keystone_authtoken/identity_uri':      value => $identity_uri;
-      }
-
-      neutron_api_config {
-        'filter:authtoken/admin_tenant_name': value => $auth_tenant;
-        'filter:authtoken/admin_user':        value => $auth_user;
-        'filter:authtoken/admin_password':    value => $auth_password, secret => true;
-        'filter:authtoken/identity_uri':      value => $identity_uri;
-      }
-
-    } else {
-
-      neutron_config {
-        'keystone_authtoken/auth_url':          value => $auth_url;
-        'keystone_authtoken/tenant_name':       value => $tenant_name;
-        'keystone_authtoken/username':          value => $username;
-        'keystone_authtoken/password':          value => $password, secret => true;
-        'keystone_authtoken/region_name':       value => $region_name;
-        'keystone_authtoken/project_domain_id': value => $project_domain_id;
-        'keystone_authtoken/project_name':      value => $project_name;
-        'keystone_authtoken/user_domain_id':    value => $user_domain_id;
-        'keystone_authtoken/admin_tenant_name': ensure => absent;
-        'keystone_authtoken/admin_user':        ensure => absent;
-        'keystone_authtoken/admin_password':    ensure => absent;
-        'keystone_authtoken/auth_region':       ensure => absent;
-        'keystone_authtoken/identity_uri':      ensure => absent;
-      }
-      neutron_api_config {
-        'filter:authtoken/admin_tenant_name':   ensure => absent;
-        'filter:authtoken/admin_user':          ensure => absent;
-        'filter:authtoken/admin_password':      ensure => absent;
-        'filter:authtoken/identity_uri':        ensure => absent;
-      }
-
-      if ! is_service_default ($auth_plugin) and ($auth_plugin) {
-        warning('auth_plugin parameter is deprecated, keystone_auth_type should be used instead')
-        neutron_config {
-          'keystone_authtoken/auth_plugin': value => $auth_plugin;
-        }
-      } else {
-        neutron_config {
-          'keystone_authtoken/auth_type': value => $keystone_auth_type;
-        }
-      }
-    }
-
+  oslo::middleware { 'neutron_config':
+    enable_proxy_headers_parsing => $enable_proxy_headers_parsing,
   }
 
   if $manage_service {
@@ -592,7 +547,6 @@ class neutron::server (
     enable     => $enabled,
     hasstatus  => true,
     hasrestart => true,
-    require    => Class['neutron'],
     tag        => ['neutron-service', 'neutron-db-sync-service'],
   }
 }

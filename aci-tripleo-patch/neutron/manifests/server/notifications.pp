@@ -30,11 +30,6 @@
 #   any events to send.
 #   Defaults to $::os_service_default
 #
-# [*nova_url*]
-#   (optional) URL for connection to nova (Only supports one nova region
-#   currently).
-#   Defaults to 'http://127.0.0.1:8774/v2'
-#
 # [*auth_type*]
 #   (optional) An authentication type to use with an OpenStack Identity server.
 #   The value should contain auth plugin name
@@ -117,12 +112,16 @@
 #   An authentication plugin to use with an OpenStack Identity server.
 #   Defaults to $::os_service_default
 #
+# [*nova_url*]
+#   Deprecated URL for connection to nova (Only supports one nova region
+#   currently).
+#   Defaults to $::os_service_default
+#
 
 class neutron::server::notifications (
   $notify_nova_on_port_status_changes = true,
   $notify_nova_on_port_data_changes   = true,
   $send_events_interval               = $::os_service_default,
-  $nova_url                           = 'http://127.0.0.1:8774/v2',
   $auth_type                          = 'password',
   $username                           = 'nova',
   $password                           = false,
@@ -141,7 +140,10 @@ class neutron::server::notifications (
   $nova_admin_password                = false,
   $nova_region_name                   = $::os_service_default,
   $auth_plugin                        = $::os_service_default,
+  $nova_url                           = $::os_service_default,
 ) {
+
+  include ::neutron::deps
 
   # Depend on the specified keystone_user resource, if it exists.
   Keystone_user <| title == 'nova' |> -> Class[neutron::server::notifications]
@@ -156,6 +158,10 @@ class neutron::server::notifications (
 
   if $password and is_service_default($tenant_id) and (! $tenant_name) {
     fail('You must provide either tenant_name or tenant_id.')
+  }
+
+  if ! is_service_default ($nova_url) {
+    warning('nova_url is deprecated and will be removed after Newton cycle.')
   }
 
   if $nova_admin_password {

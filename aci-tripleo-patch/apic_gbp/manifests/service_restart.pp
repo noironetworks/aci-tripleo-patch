@@ -3,37 +3,30 @@ class apic_gbp::service_restart(
 ) {
 
       exec {'restart-neutron-server':
-         command => "/sbin/pcs resource restart  neutron-server-clone --wait=10m;/bin/sleep 30",
+         command => "/usr/bin/systemctl restart  neutron-server",
       }
 
       exec {'restart-neutron-dhcpagent':
-         command => "/sbin/pcs resource restart neutron-dhcp-agent-clone --wait=10m",
+         command => "/usr/bin/systemctl restart neutron-dhcp-agent",
          require => Exec['restart-neutron-server'],
       }
 
-      if $ml2 {
-         exec {'restart-httpd':
-            command => "/sbin/pcs resource restart httpd-clone --wait=10m",
-         }
+      exec {'restart-httpd':
+         command => "/usr/bin/systemctl restart httpd",
       }
       
-      if !$ml2 {
-         exec {'restart-heat-engine':
-            command => "/sbin/pcs resource restart openstack-heat-engine-clone --wait=5m",
-         }
-         exec {'restart-heat-api':
-            command => "/sbin/pcs resource restart openstack-heat-api-clone --wait=5m",
-         }
+      exec {'restart-heat-engine':
+            command => "/usr/bin/systemctl restart openstack-heat-engine",
+      }
+      exec {'restart-heat-api':
+            command => "/usr/bin/systemctl restart openstack-heat-api",
       }
 
       exec {'disable_openvswitch_plugin':
-        command  => "/usr/sbin/pcs resource disable neutron-openvswitch-agent-clone",
-        onlyif => "/usr/sbin/pcs resource show | grep -q neutron-openvswitch-agent-clone",
+        command  => "/usr/bin/systemctl disable neutron-openvswitch-agent",
       }
 
       exec {'delete_openvswitch_plugin':
-        command  => "/usr/sbin/pcs resource delete neutron-openvswitch-agent-clone",
-        onlyif => "/usr/sbin/pcs resource show | grep -q neutron-openvswitch-agent-clone",
-        require => Exec['disable_openvswitch_plugin'],
+        command  => "/usr/bin/systemctl stop neutron-openvswitch-agent",
       }
 }

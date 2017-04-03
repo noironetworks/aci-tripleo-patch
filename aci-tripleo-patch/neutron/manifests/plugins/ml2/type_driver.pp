@@ -51,6 +51,9 @@ define neutron::plugins::ml2::type_driver (
   $vxlan_group,
   $max_header_size
 ){
+
+  include ::neutron::deps
+
   if ($name == 'flat') {
     neutron_plugin_ml2 {
       'ml2_type_flat/flat_networks': value => join(any2array($flat_networks), ',');
@@ -123,14 +126,6 @@ define neutron::plugins::ml2::type_driver (
     neutron_plugin_ml2 {
       'ml2_type_geneve/max_header_size': value => $max_header_size;
       'ml2_type_geneve/vni_ranges':      value => join($vni_ranges,',');
-    }
-  }
-  elsif ($name == 'opflex') {
-    if hiera(apic_gbp::opflex_agent::opflex_encap_mode) == 'vlan' {
-      validate_network_vlan_ranges($network_vlan_ranges)
-      neutron_plugin_ml2 {
-        'ml2_type_vlan/network_vlan_ranges': value => join(any2array($network_vlan_ranges), ',');
-      }
     }
   }
   else {

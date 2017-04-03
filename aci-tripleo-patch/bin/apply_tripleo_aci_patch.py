@@ -48,8 +48,12 @@ for key in sortkeylist:
 
 olist = []
 for key in otherlist:
-    rex = re.compile("(^%s.*)" % key)
-    olist.append([l for l in base_rpm_list+opflex_rpm_list for m in [rex.search(os.path.basename(l))] if m][0])
+    #otherlist files might not be present
+    try:
+       rex = re.compile("(^%s.*)" % key)
+       olist.append([l for l in base_rpm_list+opflex_rpm_list for m in [rex.search(os.path.basename(l))] if m][0])
+    except:
+       pass
 
 #check that images directory exists and has the necessary images
 images_list = ['ironic-python-agent.initramfs', 'ironic-python-agent.kernel', 'overcloud-full.initrd', 'overcloud-full.qcow2', 'overcloud-full.vmlinuz']

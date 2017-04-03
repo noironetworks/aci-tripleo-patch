@@ -14,7 +14,6 @@ class apic_gbp::aim_neutron_config(
   }
 
   $use_lldp_discovery = hiera('neutron::plugins::apic_gbp::use_lldp_discovery')
-
   if $use_lldp_discovery {
      $lldp_ensure = 'running'
      $lldp_enabled = true
@@ -85,7 +84,8 @@ class apic_gbp::aim_neutron_config(
        'apic_aim_auth/project_domain_name':       value => 'default';
        'apic_aim_auth/project_name':              value => 'admin';
        'group_policy/policy_drivers':             value => 'aim_mapping';
-       'group_policy/extension_drivers':          value => 'aim_extension,proxy_group';
+       'group_policy/extension_drivers':          value => 'aim_extension,proxy_group,apic_allowed_vm_name,apic_segmentation_label';
+       'oslo_policy/policy_file':                 value => '/etc/group-based-policy/policy.d/merged-policy.json';
      }
    
      neutron_dhcp_agent_config {
@@ -98,8 +98,24 @@ class apic_gbp::aim_neutron_config(
        'ml2/type_drivers': value => "opflex,local,flat,vlan,gre,vxlan";
        'ml2/tenant_network_types': value => "opflex";
        'ml2/mechanism_drivers': value => "apic_aim";
-       'ml2/extension_drivers': value => "apic_aim";
+       'ml2/extension_drivers': value => "apic_aim,port_security";
        'ml2_apic_aim/enable_optimized_metadata': value => $optimized_metadata;
+     }
+
+     #merge policy files
+     $neutron_hash = loadjson('/etc/neutron/policy.json')
+     $gbp_hash = loadjson('/etc/group-based-policy/policy.d/policy.json')
+     $merged_hash = deep_merge($neutron_hash, $gbp_hash)
+
+     $merged_json = inline_template("<%= @merged_hash.to_json %>")
+
+     file {'/etc/group-based-policy/policy.d/merged-policy.json.ugly':
+        content => $merged_json,
+     }
+
+     exec {'prettyprint':
+        command => '/bin/cat /etc/group-based-policy/policy.d/merged-policy.json.ugly | python -m json.tool > /etc/group-based-policy/policy.d/merged-policy.json',
+        require => File['/etc/group-based-policy/policy.d/merged-policy.json.ugly'],
      }
   }
 

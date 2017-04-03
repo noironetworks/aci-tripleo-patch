@@ -23,17 +23,32 @@
 #   (required) Supported PCI vendor devices, defined by vendor_id:product_id according
 #   to the PCI ID Repository. Default enables support for Intel and Mellanox SR-IOV capable NICs
 #
-# [*sriov_agent_required*]
-#   (optional) SRIOV neutron agent is always required for port binding
-#
 define neutron::plugins::ml2::mech_driver (
   $supported_pci_vendor_devs,
-  $sriov_agent_required = true,
 ){
+
+  include ::neutron::deps
+
   if ($name == 'sriovnicswitch') {
     neutron_plugin_sriov {
       'ml2_sriov/supported_pci_vendor_devs': value => join(any2array($supported_pci_vendor_devs), ',');
-      'ml2_sriov/agent_required':            value => $sriov_agent_required;
+    }
+    case $::osfamily {
+      'RedHat': {
+        file { '/etc/neutron/conf.d/neutron-server/ml2_conf_sriov.conf':
+          ensure => link,
+          target => '/etc/neutron/plugins/ml2/ml2_conf_sriov.ini',
+        }
+      }
+      /^(Debian|Ubuntu)$/: {
+          file_line { 'DAEMON_ARGS':
+            path => '/etc/default/neutron-server',
+            line => 'DAEMON_ARGS="$DAEMON_ARGS --config-file /etc/neutron/plugins/ml2/ml2_conf_sriov.ini"',
+          }
+      }
+      default: {
+        fail("Unsupported osfamily ${::osfamily}")
+      }
     }
   }
 }

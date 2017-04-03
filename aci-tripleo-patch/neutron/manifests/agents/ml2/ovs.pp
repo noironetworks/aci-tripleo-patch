@@ -46,14 +46,10 @@
 #   (optional) Integration bridge in OVS
 #   Defaults to 'br-int'
 #
-# [*enable_tunneling*]
-#   (optional) Enable or not tunneling
-#   Defaults to false
-#
 # [*tunnel_types*]
 #   (optional) List of types of tunnels to use when utilizing tunnels,
 #   either 'gre' or 'vxlan'.
-#   Defaults to false
+#   Defaults to empty list
 #
 # [*local_ip*]
 #   (optional) Local IP address of GRE tunnel endpoints.
@@ -105,10 +101,6 @@
 #   mappings provided as part of the $bridge_mappings parameters.
 #   Defaults to true
 #
-# [*prevent_arp_spoofing*]
-#   (optional) Enable or not ARP Spoofing Protection
-#   Defaults to $::os_service_default
-#
 # [*extensions*]
 #   (optional) Extensions list to use
 #   Defaults to $::os_service_default
@@ -144,15 +136,28 @@
 #   in the ovs config.
 #   Defaults to false.
 #
+# [*enable_dpdk*]
+#   (optional) Enable or not DPDK with OVS
+#   Defaults to false.
+#
+# === Deprecated Parameters
+#
+# [*prevent_arp_spoofing*]
+#   (optional) Enable or not ARP Spoofing Protection
+#   Defaults to $::os_service_default
+#
+# [*enable_tunneling*]
+#   (optional) Enable or not tunneling
+#   Defaults to false
+#
 class neutron::agents::ml2::ovs (
   $package_ensure             = 'present',
-  $enabled                    = true,
-  $manage_service             = true,
+  $enabled                    = false,
+  $manage_service             = false,
   $extensions                 = $::os_service_default,
   $bridge_uplinks             = [],
   $bridge_mappings            = [],
   $integration_bridge         = 'br-int',
-  $enable_tunneling           = false,
   $tunnel_types               = [],
   $local_ip                   = false,
   $tunnel_bridge              = 'br-tun',
@@ -164,7 +169,6 @@ class neutron::agents::ml2::ovs (
   $enable_distributed_routing = $::os_service_default,
   $drop_flows_on_start        = false,
   $manage_vswitch             = true,
-  $prevent_arp_spoofing       = $::os_service_default,
   $int_peer_patch_port        = $::os_service_default,
   $tun_peer_patch_port        = $::os_service_default,
   $datapath_type              = $::os_service_default,
@@ -172,18 +176,51 @@ class neutron::agents::ml2::ovs (
   $of_interface               = $::os_service_default,
   $ovsdb_interface            = $::os_service_default,
   $purge_config               = false,
+  $enable_dpdk                = false,
+  # DEPRECATED PARAMETERS
+  $prevent_arp_spoofing       = $::os_service_default,
+  $enable_tunneling           = false,
 ) {
 
+  include ::neutron::deps
   include ::neutron::params
-  if $manage_vswitch {
-    require vswitch::ovs
+
+  if $enable_dpdk and ! $manage_vswitch {
+    fail('Enabling DPDK without manage vswitch does not have any effect')
   }
 
-  if $enable_tunneling and ! $local_ip {
+  if $enable_dpdk and is_service_default($datapath_type) {
+    fail('Datapath type for ovs agent must be set when DPDK is enabled')
+  }
+
+  if $enable_dpdk and is_service_default($vhostuser_socket_dir) {
+    fail('vhost user socket directory for ovs agent must be set when DPDK is enabled')
+  }
+
+  if $manage_vswitch {
+    if $enable_dpdk {
+      require ::vswitch::dpdk
+    } else {
+      require ::vswitch::ovs
+    }
+  }
+
+  if $enable_tunneling {
+    warning('The enable_tunneling parameter is deprecated.  Please set tunnel_types with the desired type to enable tunneling.')
+  }
+
+  validate_array($tunnel_types)
+  if $enable_tunneling or (size($tunnel_types) > 0) {
+    $enable_tunneling_real = true
+  } else {
+    $enable_tunneling_real = false
+  }
+
+  if $enable_tunneling_real and ! $local_ip {
     fail('Local ip for ovs agent must be set when tunneling is enabled')
   }
 
-  if ($enable_tunneling) and (!is_service_default($enable_distributed_routing)) and (!is_service_default($l2_population)) {
+  if ($enable_tunneling_real) and (!is_service_default($enable_distributed_routing)) and (!is_service_default($l2_population)) {
     if $enable_distributed_routing and ! $l2_population {
       fail('L2 population must be enabled when DVR and tunneling are enabled')
     }
@@ -197,7 +234,9 @@ class neutron::agents::ml2::ovs (
     fail('A value of $ovsdb_interface is incorrect. The allowed values are vsctl and native')
   }
 
-  Neutron_agent_ovs<||> ~> Service['neutron-ovs-agent-service']
+  if ! is_service_default ($prevent_arp_spoofing) {
+    warning('The prevent_arp_spoofing parameter is deprecated and will be removed in Ocata release')
+  }
 
   resources { 'neutron_agent_ovs':
     purge => $purge_config,
@@ -253,20 +292,15 @@ class neutron::agents::ml2::ovs (
     neutron_agent_ovs { 'securitygroup/firewall_driver': ensure => absent }
   }
 
-  if $enable_tunneling {
+  if $enable_tunneling_real {
     neutron_agent_ovs {
-      'ovs/enable_tunneling':      value => true;
       'ovs/tunnel_bridge':         value => $tunnel_bridge;
       'ovs/local_ip':              value => $local_ip;
       'ovs/int_peer_patch_port':   value => $int_peer_patch_port;
       'ovs/tun_peer_patch_port':   value => $tun_peer_patch_port;
+      'agent/tunnel_types':        value => join($tunnel_types, ',');
     }
 
-    if size($tunnel_types) > 0 {
-      neutron_agent_ovs {
-        'agent/tunnel_types': value => join($tunnel_types, ',');
-      }
-    }
     if 'vxlan' in $tunnel_types {
       validate_vxlan_udp_port($vxlan_udp_port)
       neutron_agent_ovs {
@@ -275,7 +309,6 @@ class neutron::agents::ml2::ovs (
     }
   } else {
     neutron_agent_ovs {
-      'ovs/enable_tunneling':      value  => false;
       'ovs/tunnel_bridge':         ensure => absent;
       'ovs/local_ip':              ensure => absent;
       'ovs/int_peer_patch_port':   ensure => absent;
@@ -309,23 +342,22 @@ class neutron::agents::ml2::ovs (
     } else {
       $service_ensure = 'stopped'
     }
-    Package['neutron'] ~> Service['neutron-ovs-agent-service']
-    Package['neutron-ovs-agent'] ~> Service['neutron-ovs-agent-service']
   }
 
   service { 'neutron-ovs-agent-service':
-    ensure  => $service_ensure,
-    name    => $::neutron::params::ovs_agent_service,
-    enable  => $enabled,
-    require => Class['neutron'],
-    tag     => 'neutron-service',
+    ensure => $service_ensure,
+    name   => $::neutron::params::ovs_agent_service,
+    enable => $enabled,
+    tag    => ['neutron-service', 'neutron-db-sync-service'],
   }
 
   if $::neutron::params::ovs_cleanup_service {
-    Package['neutron-ovs-agent'] -> Service['ovs-cleanup-service']
     service { 'ovs-cleanup-service':
-      name   => $::neutron::params::ovs_cleanup_service,
-      enable => $enabled,
+      name    => $::neutron::params::ovs_cleanup_service,
+      enable  => $enabled,
+      # TODO: Remove this require once ovs-cleanup service
+      # script is packaged in neutron-openvswitch package
+      require => Package['neutron'],
     }
   }
 }

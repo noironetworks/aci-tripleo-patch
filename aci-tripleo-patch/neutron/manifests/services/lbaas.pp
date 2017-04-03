@@ -29,6 +29,21 @@
 #   (optional) Whether to install the lbaas driver package
 #   Defaults to 'present'
 #
+# [*cert_manager_type*]
+#   (optional) Certificate manager type to use for lbaas.
+#   Defaults to $::os_service_default
+#   Example: barbican
+#
+# [*cert_storage_path*]
+#   (optional) The location to store certificates locally.
+#   Defaults to $::os_service_default
+#   Example: /var/lib/neutron-lbaas/certificates/
+#
+# [*barbican_auth*]
+#  (optional) Name of the barbican authentication method to use.
+#  Defaults to $::os_service_default
+#  Example: barbican_acl_auth
+#
 # === Deprecated Parameters
 #
 # [*service_providers*]
@@ -46,12 +61,16 @@
 #   Defaults to false
 #
 class neutron::services::lbaas (
+  $cert_manager_type           = $::os_service_default,
+  $cert_storage_path           = $::os_service_default,
+  $barbican_auth               = $::os_service_default,
   $ensure_lbaas_driver_package = 'present',
   $service_providers           = $::os_service_default,
   # DEPRECATED
   $package_ensure              = false,
 ) {
 
+  include ::neutron::deps
   include ::neutron::params
 
   if $ensure_lbaas_driver_package {
@@ -61,21 +80,30 @@ class neutron::services::lbaas (
     })
   }
 
+  neutron_config {
+    'certificates/cert_manager_type':           value => $cert_manager_type;
+    'certificates/storage_path':                value => $cert_storage_path;
+    'certificates/barbican_auth':               value => $barbican_auth;
+  }
+
+  if !is_service_default($service_providers) {
+    warning("service_providers in neutron::services::lbaas is deprecated in newton \
+release, please use service provider in neutron::server class")
+  }
+
   if $package_ensure {
     warning('Package ensure is deprecated. The neutron::agents::lbaas class should be used to install the agent')
     # agent package contains both agent and service resources
-    ensure_resource( 'package', 'neutron-lbaas-agent', {
+    ensure_resource( 'package', 'neutron-lbaasv2-agent', {
       ensure => $package_ensure,
-      name   => $::neutron::params::lbaas_agent_package,
+      name   => $::neutron::params::lbaasv2_agent_package,
       tag    => ['openstack', 'neutron-package'],
     })
   }
   if !is_service_default($service_providers) {
-    warning('service_providers in neutron::services::lbaas is deprecated, please use service provider in neutron::server class')
     # default value is uncommented setting, so we should not touch it at all
     neutron_lbaas_service_config { 'service_providers/service_provider':
       value => $service_providers,
     }
-    Package<| tag == 'neutron-package' |> -> Neutron_lbaas_service_config<||>
   }
 }

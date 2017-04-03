@@ -32,8 +32,12 @@ class neutron::policy (
 
   Openstacklib::Policy::Base {
     file_path => $policy_path,
+    require   => Anchor['neutron::config::begin'],
+    notify    => Anchor['neutron::config::end'],
   }
 
   create_resources('openstacklib::policy::base', $policies)
+
+  oslo::policy { 'neutron_config': policy_file => $policy_path }
 
 }

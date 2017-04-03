@@ -13,13 +13,9 @@
 #   (optional) The state of the package
 #   Defaults to 'present'
 #
-# [*verbose*]
-#   (optional) Verbose logging
-#   Defaults to $::os_service_default
-#
 # [*debug*]
 #   (optional) Print debug messages in the logs
-#   Defaults to $::os_service_default
+#   Defaults to undef
 #
 # [*bind_host*]
 #   (optional) The IP/interface to bind to
@@ -32,7 +28,8 @@
 # [*core_plugin*]
 #   (optional) Neutron plugin provider
 #   Defaults to openvswitch
-#   Could be bigswitch, brocade, cisco, embrane, hyperv, linuxbridge, midonet, ml2, mlnx, nec, nicira, plumgrid, ryu, nuage, opencontrail (full path)
+#   Could be bigswitch, brocade, cisco, embrane, hyperv, linuxbridge, midonet,
+#   ml2, mlnx, nec, nicira, plumgrid, ryu, nuage, opencontrail (full path)
 #
 #   Example for opencontrail:
 #
@@ -62,6 +59,10 @@
 #   (optional) DHCP lease
 #   Defaults to $::os_service_default
 #
+# [*host*]
+#   (optional) Hostname to be used by the server, agents and services.
+#   Defaults to $::os_service_default
+#
 # [*dns_domain*]
 #   (optional) Domain to use for building the hostnames
 #   Defaults to $::os_service_default
@@ -79,20 +80,8 @@
 #   (optional) Allow sending resource operation notification to DHCP agent.
 #   Defaults to $::os_service_default
 #
-# [*advertise_mtu*]
-#   (optional) VMs will receive DHCP and RA MTU option when the network's preferred MTU is known
-#   Defaults to $::os_service_default
-#
 # [*allow_bulk*]
 #   (optional) Enable bulk crud operations
-#   Defaults to $::os_service_default
-#
-# [*allow_pagination*]
-#   (optional) Enable pagination
-#   Defaults to $::os_service_default
-#
-# [*allow_sorting*]
-#   (optional) Enable sorting
 #   Defaults to $::os_service_default
 #
 # [*allow_overlapping_ips*]
@@ -128,10 +117,16 @@
 # [*control_exchange*]
 #   (optional) What RPC queue/exchange to use
 #   Defaults to neutron
-
+#
+# [*default_transport_url*]
+#    (optional) A URL representing the messaging driver to use and its full
+#    configuration. Transport URLs take the form:
+#      transport://user:pass@host1:port[,hostN:portN]/virtual_host
+#    Defaults to $::os_service_default
+#
 # [*rpc_backend*]
 #   (optional) what rpc/queuing service to use
-#   Defaults to rabbit (rabbitmq)
+#   Defaults to $::os_service_default
 #
 # [*rpc_response_timeout*]
 #   (optional) Seconds to wait for a response from a call
@@ -142,6 +137,7 @@
 # [*rabbit_port*]
 # [*rabbit_user*]
 #   (optional) Various rabbitmq settings
+#   Defaults to $::os_service_default
 #
 # [*rabbit_virtual_host*]
 #   (optional) virtualhost to use.
@@ -151,11 +147,11 @@
 #   (optional) array of rabbitmq servers for HA.
 #   A single IP address, such as a VIP, can be used for load-balancing
 #   multiple RabbitMQ Brokers.
-#   Defaults to false
+#   Defaults to $::os_service_default
 #
 # [*rabbit_ha_queues*]
 #   (Optional) Use HA queues in RabbitMQ.
-#   Defaults to undef
+#   Defaults to $::os_service_default
 #
 # [*rabbit_heartbeat_timeout_threshold*]
 #   (optional) Number of seconds after which the RabbitMQ broker is considered
@@ -163,17 +159,23 @@
 #   Heartbeating helps to ensure the TCP connection to RabbitMQ isn't silently
 #   closed, resulting in missed or lost messages from the queue.
 #   (Requires kombu >= 3.0.7 and amqp >= 1.4.0)
-#   Defaults to 0
+#   Defaults to $::os_service_default
 #
 # [*rabbit_heartbeat_rate*]
 #   (optional) How often during the rabbit_heartbeat_timeout_threshold period to
 #   check the heartbeat on RabbitMQ connection.  (i.e. rabbit_heartbeat_rate=2
 #   when rabbit_heartbeat_timeout_threshold=60, the heartbeat will be checked
 #   every 30 seconds.
-#   Defaults to 2
+#   Defaults to $::os_service_default
 #
 # [*rabbit_use_ssl*]
 #   (optional) Connect over SSL for RabbitMQ
+#   Defaults to $::os_service_default
+#
+# [*rabbit_transient_queues_ttl*]
+#   (optional) Positive integer representing duration in seconds for queue
+#   TTL (x-expires). Queues which are unused for the duration of the TTL are
+#   automatically deleted. The parameter affects only reply and fanout queues.
 #   Defaults to $::os_service_default
 #
 # [*amqp_durable_queues*]
@@ -196,7 +198,7 @@
 #   (optional) SSL version to use (valid only if SSL enabled).
 #   Valid values are TLSv1, SSLv23 and SSLv3. SSLv2 may be
 #   available on some distributions.
-#   Defaults to 'TLSv1'
+#   Defaults to $::os_service_default
 #
 # [*kombu_reconnect_delay*]
 #   (optional) The amount of time to wait before attempting to reconnect
@@ -204,6 +206,88 @@
 #   for the provider to propery premote the master before attempting to
 #   reconnect. See https://review.openstack.org/#/c/76686
 #   Defaults to $::os_service_default
+#
+# [*kombu_missing_consumer_retry_timeout*]
+#   (Optional) How long to wait a missing client beforce abandoning to send it
+#   its replies. This value should not be longer than rpc_response_timeout.
+#   (integer value)
+#   Defaults to $::os_service_default
+#
+# [*kombu_failover_strategy*]
+#   (Optional) Determines how the next RabbitMQ node is chosen in case the one
+#   we are currently connected to becomes unavailable. Takes effect only if
+#   more than one RabbitMQ node is provided in config. (string value)
+#   Defaults to $::os_service_default
+#
+# [*kombu_compression*]
+#   (optional) Possible values are: gzip, bz2. If not set compression will not
+#   be used. This option may notbe available in future versions. EXPERIMENTAL.
+#   (string value)
+#   Defaults to $::os_service_default
+#
+# [*amqp_server_request_prefix*]
+#   (Optional) Address prefix used when sending to a specific server
+#   Defaults to $::os_service_default.
+#
+# [*amqp_broadcast_prefix*]
+#   (Optional) address prefix used when broadcasting to all servers
+#   Defaults to $::os_service_default.
+#
+# [*amqp_group_request_prefix*]
+#   (Optional) address prefix when sending to any server in group
+#   Defaults to $::os_service_default.
+#
+# [*amqp_container_name*]
+#   (Optional) Name for the AMQP container
+#   Defaults to $::os_service_default.
+#
+# [*amqp_idle_timeout*]
+#   (Optional) Timeout for inactive connections
+#   Defaults to $::os_service_default.
+#
+# [*amqp_trace*]
+#   (Optional) Debug: dump AMQP frames to stdout
+#   Defaults to $::os_service_default.
+#
+# [*amqp_ssl_ca_file*]
+#   (Optional) CA certificate PEM file to verify server certificate
+#   Defaults to $::os_service_default.
+#
+# [*amqp_ssl_cert_file*]
+#   (Optional) Identifying certificate PEM file to present to clients
+#   Defaults to $::os_service_default.
+#
+# [*amqp_ssl_key_file*]
+#   (Optional) Private key PEM file used to sign cert_file certificate
+#   Defaults to $::os_service_default.
+#
+# [*amqp_ssl_key_password*]
+#   (Optional) Password for decrypting ssl_key_file (if encrypted)
+#   Defaults to $::os_service_default.
+#
+# [*amqp_allow_insecure_clients*]
+#   (Optional) Accept clients using either SSL or plain TCP
+#   Defaults to $::os_service_default.
+#
+# [*amqp_sasl_mechanisms*]
+#   (Optional) Space separated list of acceptable SASL mechanisms
+#   Defaults to $::os_service_default.
+#
+# [*amqp_sasl_config_dir*]
+#   (Optional) Path to directory that contains the SASL configuration
+#   Defaults to $::os_service_default.
+#
+# [*amqp_sasl_config_name*]
+#   (Optional) Name of configuration file (without .conf suffix)
+#   Defaults to $::os_service_default.
+#
+# [*amqp_username*]
+#   (Optional) User name for message broker authentication
+#   Defaults to $::os_service_default.
+#
+# [*amqp_password*]
+#   (Optional) Password for message broker authentication
+#   Defaults to $::os_service_default.
 #
 # [*use_ssl*]
 #   (optinal) Enable SSL on the API server
@@ -223,24 +307,25 @@
 #
 # [*use_syslog*]
 #   (optional) Use syslog for logging
-#   Defaults to $::os_service_default
+#   Defaults to undef
 #
 # [*use_stderr*]
 #   (optional) Use stderr for logging
-#   Defaults to $::os_service_default
-#
-# [*log_facility*]
-#   (optional) Syslog facility to receive log lines
-#   Defaults to $::os_service_default
+#   Defaults to undef
 #
 # [*log_file*]
 #   (optional) Where to log
-#   Defaults to false
+#   Defaults to undef
 #
 # [*log_dir*]
 #   (optional) Directory where logs should be stored
 #   If set to boolean false, it will not log to any directory
-#   Defaults to /var/log/neutron
+#   Defaults to undef
+#
+# [*manage_logging*]
+#   (optional) Whether to manage olso.logging options
+#   If set to false, neutron::logging class should be evaluated
+#   Defaults to true.
 #
 # [*state_path*]
 #   (optional) Where to store state files. This directory must be writable
@@ -257,99 +342,140 @@
 #   in the neutron config.
 #   Defaults to false.
 #
+# [*notification_driver*]
+#   (optional) Driver or drivers to handle sending notifications.
+#   Value can be a string or a list.
+#   Defaults to $::os_service_default.
+#
+# [*notification_topics*]
+#   (optional) AMQP topic used for OpenStack notifications
+#   Defaults to ::os_service_default
+#
+# [*notification_transport_url*]
+#   (optional) A URL representing the messaging driver to use for
+#   notifications and its full configuration. Transport URLs
+#   take the form:
+#      transport://user:pass@host1:port[,hostN:portN]/virtual_host
+#   Defaults to $::os_service_default.
+#
 # DEPRECATED PARAMETERS
 #
-# [*qpid_hostname*]
-# [*qpid_port*]
-# [*qpid_username*]
-# [*qpid_password*]
-# [*qpid_heartbeat*]
-# [*qpid_protocol*]
-# [*qpid_tcp_nodelay*]
-# [*qpid_reconnect*]
-# [*qpid_reconnect_timeout*]
-# [*qpid_reconnect_limit*]
-# [*qpid_reconnect_interval*]
-# [*qpid_reconnect_interval_min*]
-# [*qpid_reconnect_interval_max*]
-# [*network_device_mtu*]
+# [*verbose*]
+#   (optional) Deprecated. Verbose logging
+#   Defaults to undef
+#
+# [*log_facility*]
+#   (optional) Syslog facility to receive log lines
+#   Defaults to undef
+#
+# [*advertise_mtu*]
+#   (optional) VMs will receive DHCP and RA MTU option when the network's preferred MTU is known
+#   Defaults to undef
+#
+# [*allow_sorting*]
+#   (optional) Enable sorting
+#   Defaults to undef
+#
+# [*allow_pagination*]
+#   (optional) Enable pagination
+#   Defaults to undef
 #
 class neutron (
-  $enabled                            = true,
-  $package_ensure                     = 'present',
-  $verbose                            = $::os_service_default,
-  $debug                              = $::os_service_default,
-  $bind_host                          = $::os_service_default,
-  $bind_port                          = $::os_service_default,
-  $core_plugin                        = 'openvswitch',
-  $service_plugins                    = $::os_service_default,
-  $auth_strategy                      = 'keystone',
-  $base_mac                           = $::os_service_default,
-  $mac_generation_retries             = $::os_service_default,
-  $dhcp_lease_duration                = $::os_service_default,
-  $dns_domain                         = $::os_service_default,
-  $dhcp_agents_per_network            = $::os_service_default,
-  $global_physnet_mtu                 = $::os_service_default,
-  $dhcp_agent_notification            = $::os_service_default,
-  $advertise_mtu                      = $::os_service_default,
-  $allow_bulk                         = $::os_service_default,
-  $allow_pagination                   = $::os_service_default,
-  $allow_sorting                      = $::os_service_default,
-  $allow_overlapping_ips              = $::os_service_default,
-  $api_extensions_path                = $::os_service_default,
-  $root_helper                        = 'sudo neutron-rootwrap /etc/neutron/rootwrap.conf',
-  $root_helper_daemon                 = $::os_service_default,
-  $report_interval                    = $::os_service_default,
-  $memcache_servers                   = false,
-  $control_exchange                   = 'neutron',
-  $rpc_backend                        = 'rabbit',
-  $rpc_response_timeout               = $::os_service_default,
-  $rabbit_password                    = false,
-  $rabbit_host                        = 'localhost',
-  $rabbit_hosts                       = false,
-  $rabbit_port                        = 5672,
-  $rabbit_ha_queues                   = undef,
-  $rabbit_user                        = 'guest',
-  $rabbit_virtual_host                = $::os_service_default,
-  $rabbit_heartbeat_timeout_threshold = 0,
-  $rabbit_heartbeat_rate              = 2,
-  $rabbit_use_ssl                     = $::os_service_default,
-  $amqp_durable_queues                = $::os_service_default,
-  $kombu_ssl_ca_certs                 = $::os_service_default,
-  $kombu_ssl_certfile                 = $::os_service_default,
-  $kombu_ssl_keyfile                  = $::os_service_default,
-  $kombu_ssl_version                  = 'TLSv1',
-  $kombu_reconnect_delay              = $::os_service_default,
-  $use_ssl                            = $::os_service_default,
-  $cert_file                          = $::os_service_default,
-  $key_file                           = $::os_service_default,
-  $ca_file                            = $::os_service_default,
-  $use_syslog                         = $::os_service_default,
-  $use_stderr                         = $::os_service_default,
-  $log_facility                       = $::os_service_default,
-  $log_file                           = false,
-  $log_dir                            = '/var/log/neutron',
-  $state_path                         = $::os_service_default,
-  $lock_path                          = '$state_path/lock',
-  $purge_config                       = false,
+  $enabled                              = true,
+  $package_ensure                       = 'present',
+  $debug                                = undef,
+  $bind_host                            = $::os_service_default,
+  $bind_port                            = $::os_service_default,
+  $core_plugin                          = 'openvswitch',
+  $service_plugins                      = $::os_service_default,
+  $auth_strategy                        = 'keystone',
+  $base_mac                             = $::os_service_default,
+  $mac_generation_retries               = $::os_service_default,
+  $dhcp_lease_duration                  = $::os_service_default,
+  $host                                 = $::os_service_default,
+  $dns_domain                           = $::os_service_default,
+  $dhcp_agents_per_network              = $::os_service_default,
+  $global_physnet_mtu                   = $::os_service_default,
+  $dhcp_agent_notification              = $::os_service_default,
+  $allow_bulk                           = $::os_service_default,
+  $allow_overlapping_ips                = $::os_service_default,
+  $api_extensions_path                  = $::os_service_default,
+  $root_helper                          = 'sudo neutron-rootwrap /etc/neutron/rootwrap.conf',
+  $root_helper_daemon                   = $::os_service_default,
+  $report_interval                      = $::os_service_default,
+  $memcache_servers                     = false,
+  $control_exchange                     = 'neutron',
+  $default_transport_url                = $::os_service_default,
+  $rpc_backend                          = $::os_service_default,
+  $rpc_response_timeout                 = $::os_service_default,
+  $rabbit_password                      = $::os_service_default,
+  $rabbit_host                          = $::os_service_default,
+  $rabbit_hosts                         = $::os_service_default,
+  $rabbit_port                          = $::os_service_default,
+  $rabbit_ha_queues                     = $::os_service_default,
+  $rabbit_user                          = $::os_service_default,
+  $rabbit_virtual_host                  = $::os_service_default,
+  $rabbit_heartbeat_timeout_threshold   = $::os_service_default,
+  $rabbit_heartbeat_rate                = $::os_service_default,
+  $rabbit_use_ssl                       = $::os_service_default,
+  $rabbit_transient_queues_ttl          = $::os_service_default,
+  $amqp_durable_queues                  = $::os_service_default,
+  $kombu_ssl_ca_certs                   = $::os_service_default,
+  $kombu_ssl_certfile                   = $::os_service_default,
+  $kombu_ssl_keyfile                    = $::os_service_default,
+  $kombu_ssl_version                    = $::os_service_default,
+  $kombu_reconnect_delay                = $::os_service_default,
+  $kombu_missing_consumer_retry_timeout = $::os_service_default,
+  $kombu_failover_strategy              = $::os_service_default,
+  $kombu_compression                    = $::os_service_default,
+  $amqp_server_request_prefix           = $::os_service_default,
+  $amqp_broadcast_prefix                = $::os_service_default,
+  $amqp_group_request_prefix            = $::os_service_default,
+  $amqp_container_name                  = $::os_service_default,
+  $amqp_idle_timeout                    = $::os_service_default,
+  $amqp_trace                           = $::os_service_default,
+  $amqp_ssl_ca_file                     = $::os_service_default,
+  $amqp_ssl_cert_file                   = $::os_service_default,
+  $amqp_ssl_key_file                    = $::os_service_default,
+  $amqp_ssl_key_password                = $::os_service_default,
+  $amqp_allow_insecure_clients          = $::os_service_default,
+  $amqp_sasl_mechanisms                 = $::os_service_default,
+  $amqp_sasl_config_dir                 = $::os_service_default,
+  $amqp_sasl_config_name                = $::os_service_default,
+  $amqp_username                        = $::os_service_default,
+  $amqp_password                        = $::os_service_default,
+  $use_ssl                              = $::os_service_default,
+  $cert_file                            = $::os_service_default,
+  $key_file                             = $::os_service_default,
+  $ca_file                              = $::os_service_default,
+  $use_syslog                           = undef,
+  $use_stderr                           = undef,
+  $log_file                             = undef,
+  $log_dir                              = undef,
+  $manage_logging                       = true,
+  $state_path                           = $::os_service_default,
+  $lock_path                            = '$state_path/lock',
+  $purge_config                         = false,
+  $notification_driver                  = $::os_service_default,
+  $notification_topics                  = $::os_service_default,
+  $notification_transport_url           = $::os_service_default,
   # DEPRECATED PARAMETERS
-  $qpid_hostname                      = undef,
-  $qpid_port                          = undef,
-  $qpid_username                      = undef,
-  $qpid_password                      = undef,
-  $qpid_heartbeat                     = undef,
-  $qpid_protocol                      = undef,
-  $qpid_tcp_nodelay                   = undef,
-  $qpid_reconnect                     = undef,
-  $qpid_reconnect_timeout             = undef,
-  $qpid_reconnect_limit               = undef,
-  $qpid_reconnect_interval_min        = undef,
-  $qpid_reconnect_interval_max        = undef,
-  $qpid_reconnect_interval            = undef,
-  $network_device_mtu                 = undef,
+  $verbose                              = undef,
+  $log_facility                         = undef,
+  $advertise_mtu                        = undef,
+  $allow_pagination                     = undef,
+  $allow_sorting                        = undef,
 ) {
 
+  include ::neutron::deps
   include ::neutron::params
+  if $manage_logging {
+    include ::neutron::logging
+  }
+
+  if $verbose {
+    warning('verbose is deprecated, has no effect and will be removed after Newton cycle.')
+  }
 
   if ! is_service_default($use_ssl) and ($use_ssl) {
     if is_service_default($cert_file) {
@@ -366,19 +492,29 @@ class neutron (
     }
   }
 
-  if ! is_service_default($rabbit_use_ssl) and !($rabbit_use_ssl) {
-    if ! is_service_default($kombu_ssl_ca_certs) and ($kombu_ssl_ca_certs) {
-      fail('The kombu_ssl_ca_certs parameter requires rabbit_use_ssl to be set to true')
-    }
-    if ! is_service_default($kombu_ssl_certfile) and ($kombu_ssl_certfile) {
-      fail('The kombu_ssl_certfile parameter requires rabbit_use_ssl to be set to true')
-    }
-    if ! is_service_default($kombu_ssl_keyfile) and ($kombu_ssl_keyfile) {
-      fail('The kombu_ssl_keyfile parameter requires rabbit_use_ssl to be set to true')
-    }
-  }
-  if (is_service_default($kombu_ssl_certfile) and ! is_service_default($kombu_ssl_keyfile)) or (is_service_default($kombu_ssl_keyfile) and ! is_service_default($kombu_ssl_certfile)) {
+  if (is_service_default($kombu_ssl_certfile) and ! is_service_default($kombu_ssl_keyfile))
+      or (is_service_default($kombu_ssl_keyfile) and ! is_service_default($kombu_ssl_certfile)) {
     fail('The kombu_ssl_certfile and kombu_ssl_keyfile parameters must be used together')
+  }
+  if ! is_service_default($kombu_missing_consumer_retry_timeout) and ! is_service_default($rpc_response_timeout)
+      and ($kombu_missing_consumer_retry_timeout > $rpc_response_timeout) {
+    warning('kombu_missing_consumer_retry_timeout should not be longer than rpc_response_timeout')
+  }
+
+  if $log_facility {
+    warning('log_facility is deprecated, has no effect and will be removed after Newton cycle.')
+  }
+
+  if $advertise_mtu {
+    warning('advertise_mtu is deprecated, has no effect and will be removed in Ocata.')
+  }
+
+  if $allow_sorting {
+    warning('allow_sorting is deprecated, has no effect and will be removed in a future release.')
+  }
+
+  if $allow_pagination {
+    warning('allow_pagination is deprecated, has no effect and will be removed in a future release.')
   }
 
   if $memcache_servers {
@@ -391,19 +527,11 @@ class neutron (
     tag    => ['openstack', 'neutron-package'],
   }
 
-  # Make sure all services get restarted if neutron-common package is upgraded
-  Package['neutron'] ~> Service<| tag == 'neutron-service' |>
-
   resources { 'neutron_config':
     purge => $purge_config,
   }
 
   neutron_config {
-    'DEFAULT/verbose':                 value => $verbose;
-    'DEFAULT/debug':                   value => $debug;
-    'DEFAULT/use_stderr':              value => $use_stderr;
-    'DEFAULT/use_syslog':              value => $use_syslog;
-    'DEFAULT/syslog_log_facility':     value => $log_facility;
     'DEFAULT/bind_host':               value => $bind_host;
     'DEFAULT/bind_port':               value => $bind_port;
     'DEFAULT/auth_strategy':           value => $auth_strategy;
@@ -411,43 +539,32 @@ class neutron (
     'DEFAULT/base_mac':                value => $base_mac;
     'DEFAULT/mac_generation_retries':  value => $mac_generation_retries;
     'DEFAULT/dhcp_lease_duration':     value => $dhcp_lease_duration;
+    'DEFAULT/host':                    value => $host;
     'DEFAULT/dns_domain':              value => $dns_domain;
     'DEFAULT/dhcp_agents_per_network': value => $dhcp_agents_per_network;
     'DEFAULT/dhcp_agent_notification': value => $dhcp_agent_notification;
-    'DEFAULT/advertise_mtu':           value => $advertise_mtu;
     'DEFAULT/allow_bulk':              value => $allow_bulk;
-    'DEFAULT/allow_pagination':        value => $allow_pagination;
-    'DEFAULT/allow_sorting':           value => $allow_sorting;
     'DEFAULT/allow_overlapping_ips':   value => $allow_overlapping_ips;
-    'DEFAULT/control_exchange':        value => $control_exchange;
-    'DEFAULT/rpc_backend':             value => $rpc_backend;
     'DEFAULT/api_extensions_path':     value => $api_extensions_path;
     'DEFAULT/state_path':              value => $state_path;
-    'DEFAULT/rpc_response_timeout':    value => $rpc_response_timeout;
-    'DEFAULT/global_physnet_mtu':      value => pick($network_device_mtu, $global_physnet_mtu);
-    'oslo_concurrency/lock_path':      value => $lock_path;
+    'DEFAULT/global_physnet_mtu':      value => $global_physnet_mtu;
     'agent/root_helper':               value => $root_helper;
     'agent/root_helper_daemon':        value => $root_helper_daemon;
     'agent/report_interval':           value => $report_interval;
   }
 
-  if $log_file {
-    neutron_config {
-      'DEFAULT/log_file': value => $log_file;
-      'DEFAULT/log_dir':  value => $log_dir;
-    }
-  } else {
-    if $log_dir {
-      neutron_config {
-        'DEFAULT/log_dir':  value  => $log_dir;
-        'DEFAULT/log_file': ensure => absent;
-      }
-    } else {
-      neutron_config {
-        'DEFAULT/log_dir':  ensure => absent;
-        'DEFAULT/log_file': ensure => absent;
-      }
-    }
+  oslo::messaging::default { 'neutron_config':
+    transport_url        => $default_transport_url,
+    rpc_response_timeout => $rpc_response_timeout,
+    control_exchange     => $control_exchange
+  }
+
+  oslo::concurrency { 'neutron_config': lock_path => $lock_path }
+
+  oslo::messaging::notifications { 'neutron_config':
+    driver        => $notification_driver,
+    topics        => $notification_topics,
+    transport_url => $notification_transport_url,
   }
 
   if ! is_service_default ($service_plugins) and ($service_plugins) {
@@ -469,64 +586,56 @@ class neutron (
   }
 
 
-  if $rpc_backend == 'rabbit' or $rpc_backend == 'neutron.openstack.common.rpc.impl_kombu' {
-    if ! $rabbit_password {
+  if $rpc_backend in [$::os_service_default, 'neutron.openstack.common.rpc.impl_kombu', 'rabbit'] {
+    if is_service_default($rabbit_password) {
       fail('When rpc_backend is rabbitmq, you must set rabbit password')
     }
-    if $rabbit_hosts {
-      neutron_config { 'oslo_messaging_rabbit/rabbit_hosts':     value  => join($rabbit_hosts, ',') }
-    } else  {
-      neutron_config { 'oslo_messaging_rabbit/rabbit_host':      value => $rabbit_host }
-      neutron_config { 'oslo_messaging_rabbit/rabbit_port':      value => $rabbit_port }
-      neutron_config { 'oslo_messaging_rabbit/rabbit_hosts':     value => "${rabbit_host}:${rabbit_port}" }
-    }
 
-    if $rabbit_ha_queues == undef {
-      if $rabbit_hosts {
-        neutron_config { 'oslo_messaging_rabbit/rabbit_ha_queues': value => true }
-      } else {
-        neutron_config { 'oslo_messaging_rabbit/rabbit_ha_queues': value => false }
-      }
-    } else {
-      neutron_config { 'oslo_messaging_rabbit/rabbit_ha_queues': value => $rabbit_ha_queues }
+    oslo::messaging::rabbit {'neutron_config':
+      rabbit_userid                        => $rabbit_user,
+      rabbit_password                      => $rabbit_password,
+      rabbit_virtual_host                  => $rabbit_virtual_host,
+      heartbeat_timeout_threshold          => $rabbit_heartbeat_timeout_threshold,
+      heartbeat_rate                       => $rabbit_heartbeat_rate,
+      rabbit_use_ssl                       => $rabbit_use_ssl,
+      rabbit_transient_queues_ttl          => $rabbit_transient_queues_ttl,
+      kombu_reconnect_delay                => $kombu_reconnect_delay,
+      kombu_missing_consumer_retry_timeout => $kombu_missing_consumer_retry_timeout,
+      kombu_failover_strategy              => $kombu_failover_strategy,
+      kombu_compression                    => $kombu_compression,
+      kombu_ssl_ca_certs                   => $kombu_ssl_ca_certs,
+      kombu_ssl_certfile                   => $kombu_ssl_certfile,
+      kombu_ssl_keyfile                    => $kombu_ssl_keyfile,
+      amqp_durable_queues                  => $amqp_durable_queues,
+      rabbit_hosts                         => $rabbit_hosts,
+      rabbit_ha_queues                     => $rabbit_ha_queues,
+      rabbit_host                          => $rabbit_host,
+      rabbit_port                          => $rabbit_port,
+      kombu_ssl_version                    => $kombu_ssl_version,
     }
-
+  } elsif $rpc_backend == 'amqp' {
+    oslo::messaging::amqp { 'neutron_config':
+      server_request_prefix  => $amqp_server_request_prefix,
+      broadcast_prefix       => $amqp_broadcast_prefix,
+      group_request_prefix   => $amqp_group_request_prefix,
+      container_name         => $amqp_container_name,
+      idle_timeout           => $amqp_idle_timeout,
+      trace                  => $amqp_trace,
+      ssl_ca_file            => $amqp_ssl_ca_file,
+      ssl_cert_file          => $amqp_ssl_cert_file,
+      ssl_key_file           => $amqp_ssl_key_file,
+      ssl_key_password       => $amqp_ssl_key_password,
+      allow_insecure_clients => $amqp_allow_insecure_clients,
+      sasl_mechanisms        => $amqp_sasl_mechanisms,
+      sasl_config_dir        => $amqp_sasl_config_dir,
+      sasl_config_name       => $amqp_sasl_config_name,
+      username               => $amqp_username,
+      password               => $amqp_password,
+    }
+  } else {
     neutron_config {
-      'oslo_messaging_rabbit/rabbit_userid':                value => $rabbit_user;
-      'oslo_messaging_rabbit/rabbit_password':              value => $rabbit_password, secret => true;
-      'oslo_messaging_rabbit/rabbit_virtual_host':          value => $rabbit_virtual_host;
-      'oslo_messaging_rabbit/heartbeat_timeout_threshold':  value => $rabbit_heartbeat_timeout_threshold;
-      'oslo_messaging_rabbit/heartbeat_rate':               value => $rabbit_heartbeat_rate;
-      'oslo_messaging_rabbit/rabbit_use_ssl':               value => $rabbit_use_ssl;
-      'oslo_messaging_rabbit/kombu_reconnect_delay':        value => $kombu_reconnect_delay;
-      'oslo_messaging_rabbit/kombu_ssl_ca_certs':           value => $kombu_ssl_ca_certs;
-      'oslo_messaging_rabbit/kombu_ssl_certfile':           value => $kombu_ssl_certfile;
-      'oslo_messaging_rabbit/kombu_ssl_keyfile':            value => $kombu_ssl_keyfile;
-      'oslo_messaging_rabbit/amqp_durable_queues':          value => $amqp_durable_queues;
+      'DEFAULT/rpc_backend': value => $rpc_backend;
     }
-
-    if ! is_service_default($rabbit_use_ssl) and ($rabbit_use_ssl) {
-
-      if $kombu_ssl_version {
-        neutron_config { 'oslo_messaging_rabbit/kombu_ssl_version':  value => $kombu_ssl_version; }
-      } else {
-        neutron_config { 'oslo_messaging_rabbit/kombu_ssl_version':  ensure => absent; }
-      }
-
-    } else {
-      neutron_config {
-        'oslo_messaging_rabbit/kombu_ssl_version':  ensure => absent;
-      }
-    }
-
-  }
-
-  if $rpc_backend == 'qpid' or $rpc_backend == 'neutron.openstack.common.rpc.impl_qpid' {
-    warning('Qpid driver is removed from Oslo.messaging in the Mitaka release')
-  }
-
-  if $network_device_mtu {
-    warning('The neutron::network_device_mtu parameter is deprecated, use neutron::global_physnet_mtu instead.')
   }
 
   # SSL Options

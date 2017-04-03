@@ -48,10 +48,8 @@ if $ctrlrs != "_not_there" {
           require => Class['apic_gbp::aim_db'],
         }
    
-        if $pacemaker_master {
-          class { 'apic_gbp::service_restart': 
-            require => Class['apic_gbp::aim_service', 'apic_gbp::opflex_agent'],
-          }
+        class { 'apic_gbp::service_restart': 
+          require => Class['apic_gbp::aim_service', 'apic_gbp::opflex_agent'],
         }
 
         class { 'apic_gbp::opflex_agent': 
@@ -95,7 +93,7 @@ if $ctrlrs != "_not_there" {
         class {'apic_gbp::opflex_restart':
           require => Class['apic_gbp::opflex_agent'],
         }
-    }
+     }
 
   } else {
     #legacy stuff here  

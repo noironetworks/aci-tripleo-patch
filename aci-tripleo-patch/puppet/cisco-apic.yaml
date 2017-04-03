@@ -63,6 +63,11 @@ parameters:
     description: The password for the neutron service and db account, used by neutron agents.
     type: string
     hidden: true
+  NeutronMetadataProxySharedSecret:
+    default: unset
+    description: The metadata shared secret
+    type: string
+    hidden: true
   ACIOpflexMechanism:
     type: string
     default: 'cisco_apic_ml2'
@@ -87,7 +92,7 @@ resources:
         hiera:
           datafiles:
             cisco_aci_data:
-              raw_data: {get_file: /usr/share/openstack-tripleo-heat-templates/puppet/hieradata/controller.yaml}
+              #raw_data: {get_file: /usr/share/openstack-tripleo-heat-templates/puppet/hieradata/controller.yaml}
               mapped_data:
                 apic_gbp::opflex_agent::opflex_peer_ip: {get_input: opflex_peer_ip}
                 apic_gbp::opflex_agent::opflex_remote_ip: {get_input: opflex_remote_ip}
@@ -96,6 +101,7 @@ resources:
                 apic_gbp::opflex_agent::opflex_uplink_iface: {get_input: opflex_uplink_iface}
                 apic_gbp::opflex_agent::opflex_uplink_vlan: {get_input: opflex_uplink_vlan}
                 apic_gbp::opflex_agent::opflex_encap_mode: {get_input: opflex_encap_mode}
+                neutron::plugins::ml2::cisco::apic_ml2::use_lldp_discovery: {get_input: lldp_discovery}
                 apic_gbp::opflex_agent::opflex_target_bridge_to_patch: {get_input: opflex_target_bridge_to_patch}
                 apic_gbp::compute::optimized_metadata: {get_input: optimized_neutron_metadata}
                 neutron::plugins::ml2::cisco::apic_ml2::apic_hosts: {get_input: apic_hosts}
@@ -103,7 +109,6 @@ resources:
                 neutron::plugins::ml2::cisco::apic_ml2::apic_password: {get_input: apic_password}
                 neutron::plugins::ml2::cisco::apic_ml2::apic_system_id: {get_input: apic_system_id}
                 neutron::plugins::ml2::cisco::apic_ml2::encap_mode: {get_input: opflex_encap_mode}
-                neutron::plugins::ml2::cisco::apic_ml2::use_lldp_discovery: {get_input: lldp_discovery}
                 neutron::plugins::ml2::cisco::apic_ml2::apic_entity_profile: {get_input: apic_aep}
                 neutron::plugins::ml2::cisco::apic_ml2::apic_l3out: {get_input: apic_l3out}
                 neutron::plugins::ml2::cisco::apic_ml2::apic_vpcpairs: {get_input: apic_vpcpairs}
@@ -111,6 +116,7 @@ resources:
                 neutron::plugins::ml2::cisco::apic_ml2::optimized_metadata: {get_input: optimized_neutron_metadata}
                 neutron::plugins::ml2::cisco::apic_ml2::enable_aim: {get_input: enable_aim}
                 neutron::agents::metadata::auth_password: {get_input: neutron_password}
+                neutron::agents::metadata::shared_secret: {get_input: neutron_metadata_shared_secret}
                 cisco::apic::opflex::neutron_mechanism: {get_input: opflex_neutron_mechanism}
                 cisco::apic::enable_aim: {get_input: enable_aim}
                 neutron::plugins::apic_gbp::apic_hosts: {get_input: apic_hosts}
@@ -147,6 +153,7 @@ resources:
         optimized_neutron_metadata: {get_param: ACIOpflexOptimizedMetadata}
         optimized_neutron_dhcp: {get_param: ACIOpflexOptimizedDhcp}
         neutron_password: {get_param: NeutronPassword}
+        neutron_metadata_shared_secret: {get_param: NeutronMetadataProxySharedSecret}
         opflex_neutron_mechanism: {get_param: ACIOpflexMechanism}
         enable_aim: {get_param: ACIEnableAIM}
         apic_l3out: {get_param: ACIL3Out}

@@ -34,11 +34,11 @@
 #   Defaults to true
 #
 # [*physical_device_mappings*]
-#   (optional) List of <physical_network>:<physical device>
+#   (optional) Array of <physical_network>:<physical device>
 #   All physical networks listed in network_vlan_ranges
 #   on the server should have mappings to appropriate
 #   interfaces on each agent.
-#   Defaults to empty list
+#   Value should be of type array, Defaults to $::os_service_default
 #
 # [*polling_interval*]
 #   (optional) The number of seconds the agent will wait between
@@ -46,11 +46,12 @@
 #   Defaults to '2"
 #
 # [*exclude_devices*]
-#   (optional) List of <network_device>:<excluded_devices> mapping
+#   (optional) Array of <network_device>:<excluded_devices> mapping
 #   network_device to the agent's node-specific list of virtual functions
 #   that should not be used for virtual networking. excluded_devices is a
 #   semicolon separated list of virtual functions to exclude from network_device.
 #   The network_device in the mapping should appear in the physical_device_mappings list.
+#   Value should be of type array, Defaults to $::os_service_default
 #
 # [*extensions*]
 #   (optional) Extensions list to use
@@ -61,20 +62,27 @@
 #   in the sriov config.
 #   Defaults to false.
 #
+# [*number_of_vfs*]
+#   (optional) List of <physical_network>:<number_of_vfs> specifying the number
+#   VFs to be exposed per physical interface.
+#   For example, to configure two inteface with number of VFs, specify
+#   it as "eth1:4,eth2:10"
+#   Defaults to $::os_service_default.
+#
 class neutron::agents::ml2::sriov (
   $package_ensure             = 'present',
   $enabled                    = true,
   $manage_service             = true,
-  $physical_device_mappings   = [],
+  $physical_device_mappings   = $::os_service_default,
   $polling_interval           = 2,
-  $exclude_devices            = [],
+  $exclude_devices            = $::os_service_default,
   $extensions                 = $::os_service_default,
   $purge_config               = false,
+  $number_of_vfs              = $::os_service_default,
 ) {
 
+  include ::neutron::deps
   include ::neutron::params
-
-  Neutron_sriov_agent_config <||> ~> Service['neutron-sriov-nic-agent-service']
 
   resources { 'neutron_sriov_agent_config':
     purge => $purge_config,
@@ -82,12 +90,18 @@ class neutron::agents::ml2::sriov (
 
   neutron_sriov_agent_config {
     'sriov_nic/polling_interval':         value => $polling_interval;
-    'sriov_nic/exclude_devices':          value => join($exclude_devices, ',');
-    'sriov_nic/physical_device_mappings': value => join($physical_device_mappings, ',');
+    'sriov_nic/exclude_devices':          value => pick(join(any2array($exclude_devices), ','), $::os_service_default);
+    'sriov_nic/physical_device_mappings': value => pick(join(any2array($physical_device_mappings), ','), $::os_service_default);
     'agent/extensions':                   value => join(any2array($extensions), ',');
+    # As of now security groups are not supported for SR-IOV ports.
+    # It is required to disable Firewall driver in the SR-IOV agent config.
+    'securitygroup/firewall_driver':      value => 'neutron.agent.firewall.NoopFirewallDriver';
   }
 
-  Package['neutron-sriov-nic-agent'] -> Neutron_sriov_agent_config <||>
+  if !is_service_default($number_of_vfs) and !empty($number_of_vfs) {
+    neutron_agent_sriov_numvfs { $number_of_vfs: ensure => present }
+  }
+
   package { 'neutron-sriov-nic-agent':
     ensure => $package_ensure,
     name   => $::neutron::params::sriov_nic_agent_package,
@@ -100,16 +114,13 @@ class neutron::agents::ml2::sriov (
     } else {
       $service_ensure = 'stopped'
     }
-    Package['neutron'] ~> Service['neutron-sriov-nic-agent-service']
-    Package['neutron-sriov-nic-agent'] ~> Service['neutron-sriov-nic-agent-service']
   }
 
   service { 'neutron-sriov-nic-agent-service':
-    ensure  => $service_ensure,
-    name    => $::neutron::params::sriov_nic_agent_service,
-    enable  => $enabled,
-    require => Class['neutron'],
-    tag     => 'neutron-service',
+    ensure => $service_ensure,
+    name   => $::neutron::params::sriov_nic_agent_service,
+    enable => $enabled,
+    tag    => 'neutron-service',
   }
 
 }

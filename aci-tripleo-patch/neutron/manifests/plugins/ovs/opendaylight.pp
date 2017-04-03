@@ -23,10 +23,15 @@
 # (optional) The ODL southbound interface for OVSDB
 # Defaults to 'tcp:127.0.0.1:6640'
 #
+# [*ovsdb_server_iface*]
+# (optional) The interface for OVSDB local server to listen on
+# Defaults to 'ptcp:6639:127.0.0.1'
+#
 # [*provider_mappings*]
-# (optional) bridge mappings required if using VLAN
-# tenant type.  Example: provider_mappings=br-ex:eth0
-# Defaults to false
+# (optional) List of <physical_network>:<nic/bridge>
+# Required for VLAN provider networks.
+# Required for Flat provider networks when using new NetVirt
+# Defaults to empty list
 #
 # [*retry_interval*]
 # (optional) The time (in seconds) to wait between ODL availability checks
@@ -38,14 +43,18 @@
 #
 class neutron::plugins::ovs::opendaylight (
   $tunnel_ip,
-  $odl_username      = 'admin',
-  $odl_password      = 'admin',
-  $odl_check_url     = 'http://127.0.0.1:8080/restconf/operational/network-topology:network-topology/topology/netvirt:1',
-  $odl_ovsdb_iface   = 'tcp:127.0.0.1:6640',
-  $provider_mappings = false,
+  $odl_username       = 'admin',
+  $odl_password       = 'admin',
+  $odl_check_url      = 'http://127.0.0.1:8080/restconf/operational/network-topology:network-topology/topology/netvirt:1',
+  $odl_ovsdb_iface    = 'tcp:127.0.0.1:6640',
+  $ovsdb_server_iface = 'ptcp:6639:127.0.0.1',
+  $provider_mappings  = [],
   $retry_interval     = 60,
   $retry_count        = 20,
 ) {
+
+  include ::neutron::deps
+
   # Handle the case where ODL controller is also on this host
   Service<| title == 'opendaylight' |> -> Exec <| title == 'Wait for NetVirt OVSDB to come up' |>
 
@@ -57,8 +66,8 @@ class neutron::plugins::ovs::opendaylight (
   } ->
   # OVS manager
   exec { 'Set OVS Manager to OpenDaylight':
-    command => "ovs-vsctl set-manager ${odl_ovsdb_iface}",
-    unless  => "ovs-vsctl show | grep 'Manager \"${odl_ovsdb_iface}\"'",
+    command => "ovs-vsctl set-manager ${ovsdb_server_iface} ${odl_ovsdb_iface}",
+    unless  => "ovs-vsctl show | grep 'Manager \"${ovsdb_server_iface} ${odl_ovsdb_iface}\"'",
     path    => '/usr/sbin:/usr/bin:/sbin:/bin',
   } ->
   # local ip
@@ -68,11 +77,12 @@ class neutron::plugins::ovs::opendaylight (
     path    => '/usr/sbin:/usr/bin:/sbin:/bin',
   }
 
-  # set mappings for VLAN
-  if $provider_mappings {
+  # set mappings for VLAN or Flat provider networks
+  if $provider_mappings and ! empty($provider_mappings) {
+    $pr_map_str = join(any2array($provider_mappings), ',')
     exec { 'Set provider_mappings Other Option':
-      command => "ovs-vsctl set Open_vSwitch $(ovs-vsctl get Open_vSwitch . _uuid) other_config:provider_mappings=${provider_mappings}",
-      unless  => "ovs-vsctl list Open_vSwitch | grep 'provider_mappings' | grep ${provider_mappings}",
+      command => "ovs-vsctl set Open_vSwitch $(ovs-vsctl get Open_vSwitch . _uuid) other_config:provider_mappings=${pr_map_str}",
+      unless  => "ovs-vsctl list Open_vSwitch | grep 'provider_mappings' | grep ${pr_map_str}",
       path    => '/usr/sbin:/usr/bin:/sbin:/bin',
     }
   }

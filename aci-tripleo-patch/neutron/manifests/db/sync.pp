@@ -14,18 +14,21 @@ class neutron::db::sync(
   $extra_params = '--config-file /etc/neutron/neutron.conf --config-file /etc/neutron/plugin.ini',
 ) {
 
+  include ::neutron::deps
   include ::neutron::params
 
-  Package<| tag == 'neutron-package' |> ~> Exec['neutron-db-sync']
-  Exec['neutron-db-sync'] ~> Service <| tag == 'neutron-db-sync-service' |>
-
-  Neutron_config<||> ~> Exec['neutron-db-sync']
-  Neutron_config<| title == 'database/connection' |> ~> Exec['neutron-db-sync']
-
   exec { 'neutron-db-sync':
-    command     => "neutron-db-manage ${extra_params} upgrade head",
+    command     => "neutron-db-manage ${extra_params} upgrade heads",
     path        => '/usr/bin',
     refreshonly => true,
+    try_sleep   => 5,
+    tries       => 10,
     logoutput   => on_failure,
+    subscribe   => [
+      Anchor['neutron::install::end'],
+      Anchor['neutron::config::end'],
+      Anchor['neutron::dbsync::begin']
+    ],
+    notify      => Anchor['neutron::dbsync::end'],
   }
 }

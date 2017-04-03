@@ -8,9 +8,11 @@ class apic_gbp::aim_config(
   $neutron_db_name     = hiera('neutron::db::mysql::dbname')
   $neutron_sql_connection  = "mysql+pymysql://${neutron_db_user}:${neutron_db_password}@${neutron_db_host}/${neutron_db_name}"
 
-  $rabbit_hosts = hiera('neutron::rabbit_hosts')
-  $rabbit_host =  hiera('neutron::rabbit_host', nil)
-  $rabbit_port =  hiera('neutron::rabbit_port')
+  $rabbit_host =  hiera('neutron::rabbit_host', undef)
+  $rabbit_port  = hiera('neutron::rabbit_port', 5672)
+
+  $rabbit_hosts = hiera('rabbitmq_node_ips', undef)
+  $rabbit_endpoints = suffix(any2array(normalize_ip_for_uri($rabbit_hosts)), ":${rabbit_port}")
   $rabbit_user =  hiera('neutron::rabbit_user')
   $rabbit_password = hiera('neutron::rabbit_password')
 
@@ -27,7 +29,7 @@ class apic_gbp::aim_config(
 
   if $rabbit_hosts {
      aim_config { 
-        'oslo_messaging_rabbit/rabbit_hosts':     value  => join($rabbit_hosts, ',');
+        'oslo_messaging_rabbit/rabbit_hosts':     value  => join($rabbit_endpoints, ',');
       }
   } else  {
      aim_config { 
@@ -55,6 +57,7 @@ class apic_gbp::aim_config(
      'DEFAULT/apic_system_id':                    value => $apic_system_id;
      "apic_vmdom:$vm_domain_name/encap_mode":     value => $encap_mode;
      'apic/apic_entity_profile':                  value => $aep;
+     'apic/scope_infra':                          value => False;
      'apic/apic_vpc_pairs':                       value => $apic_vpc_pairs;
   }
 
