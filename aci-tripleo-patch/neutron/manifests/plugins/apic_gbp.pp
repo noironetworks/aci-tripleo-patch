@@ -118,9 +118,25 @@ class neutron::plugins::apic_gbp (
      }
   }
 
+  $neutron_hash = loadjson('/etc/neutron/policy.json')
+  $gbp_hash = loadjson('/etc/group-based-policy/policy.d/policy.json')
+  $merged_hash = deep_merge($neutron_hash, $gbp_hash)
+
+  $merged_json = inline_template("<%= @merged_hash.to_json %>")
+
+  file {'/etc/group-based-policy/policy.d/merged-policy.json.ugly':
+     content => $merged_json,
+  }
+
+  exec {'prettyprint':
+     command => '/bin/cat /etc/group-based-policy/policy.d/merged-policy.json.ugly | python -m json.tool > /etc/group-based-policy/policy.d/merged-policy.json',
+     require => File['/etc/group-based-policy/policy.d/merged-policy.json.ugly'],
+  }
+
   neutron_config {
-    'DEFAULT/service_plugins':                     value => 'group_policy,servicechain,apic_gbp_l3';
-    'DEFAULT/apic_system_id':                      value => $apic_system_id;
+    'DEFAULT/apic_system_id':                  value => $apic_system_id;
+    'DEFAULT/service_plugins':                 value => 'group_policy,servicechain,apic_gbp_l3';
+    'oslo_policy/policy_file':                 value => '/etc/group-based-policy/policy.d/merged-policy.json';
   }
   
   neutron_dhcp_agent_config {
