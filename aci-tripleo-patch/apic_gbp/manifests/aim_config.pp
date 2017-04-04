@@ -55,6 +55,7 @@ class apic_gbp::aim_config(
      'DEFAULT/apic_system_id':                    value => $apic_system_id;
      "apic_vmdom:$vm_domain_name/encap_mode":     value => $encap_mode;
      'apic/apic_entity_profile':                  value => $aep;
+     'apic/scope_infra':                          value => False;
      'apic/apic_vpc_pairs':                       value => $apic_vpc_pairs;
   }
 
