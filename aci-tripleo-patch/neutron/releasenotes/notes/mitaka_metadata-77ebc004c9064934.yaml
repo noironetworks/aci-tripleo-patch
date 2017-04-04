@@ -1,0 +1,8 @@
+---
+features:
+  - Add SSL parameters to communicate with Nova.
+deprecations:
+  - Deprecate API parameters for metadata agent, not needed
+    anymore in Mitaka.
+fixes:
+  - Metadata agent config should be applied after package installation.

@@ -1,5 +1,5 @@
 Name:           aci-tripleo-patch
-Version:        9.0
+Version:        10.0
 Release:        %{?release}%{!?release:1}
 Summary:        Files for ACI tripleO patch
 License:        ASL 2.0
