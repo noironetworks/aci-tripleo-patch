@@ -1,4 +1,0 @@
----
-features:
-  - The enable_headers_parsing option was added to the server manifest. This
-    enables the http_proxy_to_wsgi middleware to process SSL-related headers.

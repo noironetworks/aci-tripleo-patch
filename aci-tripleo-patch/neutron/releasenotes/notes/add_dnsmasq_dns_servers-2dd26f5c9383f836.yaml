@@ -1,3 +1,0 @@
----
-features:
-  - Add 'dnsmasq_dns_servers' option support to dhcp agent settings.

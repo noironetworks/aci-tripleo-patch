@@ -1,4 +1,0 @@
----
-deprecations:
-  - Remove 'router_id' configuration option from the
-    l3_agent.ini file.

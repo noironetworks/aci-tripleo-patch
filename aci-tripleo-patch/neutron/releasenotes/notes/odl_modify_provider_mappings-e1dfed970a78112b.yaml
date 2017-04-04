@@ -1,3 +1,0 @@
----
-upgrade:
-  - Opendaylight OVS provider_mappings argument now accepts an array type.

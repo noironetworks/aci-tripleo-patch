@@ -1,5 +1,0 @@
----
-features:
-  - Add 'binding_host_id' and 'binding_profile'
-    support to neutron_port custom type.
-

@@ -1,3 +1,0 @@
----
-features:
-  - Add oslo.messaging rabbit_transient_queues_ttl parameter support.

@@ -1,4 +1,0 @@
----
-deprecations:
-  - Use identity_uri and auth_uri by default and deprecate old auth params.
-  - Set v3 auth related options by default.

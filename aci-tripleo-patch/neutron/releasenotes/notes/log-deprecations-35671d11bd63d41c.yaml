@@ -1,3 +1,0 @@
----
-deprecations:
- - log_facility is Deprecated and will be removed after Newton cycle.

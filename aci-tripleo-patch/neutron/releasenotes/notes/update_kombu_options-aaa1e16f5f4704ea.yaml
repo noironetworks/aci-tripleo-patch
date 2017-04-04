@@ -1,4 +1,0 @@
----
-features:
-  - Added additional kombu options which are supported by puppet-oslo module
-    Removed unneeded validation checks (covered by puppet-oslo)
