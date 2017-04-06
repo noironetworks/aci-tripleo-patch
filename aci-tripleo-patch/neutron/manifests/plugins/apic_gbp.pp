@@ -125,7 +125,7 @@ class neutron::plugins::apic_gbp (
        'ml2_cisco_apic/apic_provision_hostlinks':      value => $apic_provision_hostlinks;
        'ml2_cisco_apic/enable_optimized_dhcp':         value => $optimized_dhcp;
        'ml2_cisco_apic/enable_optimized_metadata':     value => $optimized_metadata;
-       'group_policy/policy_drivers':                  value => 'implicit_policy,apic';
+       'group_policy/policy_drivers':                  value => 'implicit_policy,chain_mapping,apic';
        'group_policy_implicit_policy/default_ip_pool': value => '192.168.0.0/16';
   }
 
