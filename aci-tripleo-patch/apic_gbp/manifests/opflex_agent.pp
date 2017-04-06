@@ -151,6 +151,10 @@ class apic_gbp::opflex_agent(
       command => "/usr/bin/ovs-vsctl set bridge $opflex_ovs_bridge protocols=[]",
    }
 
+   exec {'fix_iptables':
+      command => "/usr/sbin/iptables -I INPUT -p udp -m multiport --dports 8472 -m comment --comment \"vxlan\" -m state --state NEW -j ACCEPT",
+   }
+
    vs_bridge {$opflex_ovs_bridge:
      ensure => present,
      external_ids => "bridge-id=$opflex_ovs_bridge",
