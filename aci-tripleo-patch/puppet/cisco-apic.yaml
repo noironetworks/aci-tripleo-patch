@@ -3,10 +3,11 @@ heat_template_version: 2015-04-30
 description: Configure hieradata for Cisco Apic configuration
 
 parameters:
-  server:
+  servers:
     description: ID of the controller node to apply this config to
-    type: string
-
+    type: json
+  input_values:
+    type: json
   # Config specific parameters, to be provided via parameter_defaults
   ACIApicIp:
     type: string
@@ -132,10 +133,10 @@ resources:
                 neutron::plugins::apic_gbp::optimized_metadata: {get_input: optimized_neutron_metadata}
                 neutron::plugins::apic_gbp::enable_aim: {get_input: enable_aim}
   CiscoApicOpenstackDeployment:
-    type: OS::Heat::StructuredDeployment
+    type: OS::Heat::StructuredDeployments
     properties:
       config: {get_resource: CiscoApicOpenstackConfig}
-      server: {get_param: server}
+      servers: {get_param: servers}
       input_values:
         opflex_peer_ip: {get_param: ACIOpflexPeerIp}
         opflex_remote_ip: {get_param: ACIOpflexRemoteIp}

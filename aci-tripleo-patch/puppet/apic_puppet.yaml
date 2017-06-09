@@ -1,10 +1,12 @@
-heat_template_version: 2014-10-16
+heat_template_version: 2015-04-30
 
 description: >
   Configure neutron and opflex
 
 parameters:
   servers:
+    type: json
+  input_values:
     type: json
   ConfigDebug:
     default: false
@@ -40,16 +42,34 @@ resources:
       config:
         get_file: manifests/compute_metadata.pp
 
-  ExtraDeployments:
-    type: OS::Heat::SoftwareDeployments
+  ExtraDeploymentsController:
+    type: OS::Heat::SoftwareDeploymentGroup
     properties:
-      servers:  {get_param: servers}
+      servers:  {get_param: [servers, 'Controller']}
       config: {get_resource: ExtraConfig}
       actions: ['CREATE','UPDATE']
+      input_values: {get_param: input_values}
 
-  ExtraDeployments1:
-    type: OS::Heat::SoftwareDeployments
+  ExtraDeployments1Controller:
+    type: OS::Heat::SoftwareDeploymentGroup
     properties:
-      servers:  {get_param: servers}
+      servers:  {get_param: [servers, 'Controller']}
       config: {get_resource: ExtraConfig1}
       actions: ['CREATE','UPDATE']
+      input_values: {get_param: input_values}
+
+  ExtraDeploymentsCompute:
+    type: OS::Heat::SoftwareDeploymentGroup
+    properties:
+      servers:  {get_param: [servers, 'Compute']}
+      config: {get_resource: ExtraConfig}
+      actions: ['CREATE','UPDATE']
+      input_values: {get_param: input_values}
+
+  ExtraDeployments1Compute:
+    type: OS::Heat::SoftwareDeploymentGroup
+    properties:
+      servers:  {get_param: [servers, 'Compute']}
+      config: {get_resource: ExtraConfig1}
+      actions: ['CREATE','UPDATE']
+      input_values: {get_param: input_values}
