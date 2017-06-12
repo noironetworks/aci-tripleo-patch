@@ -10,6 +10,8 @@ parameters:
     default: false
     description: Enable puppet debugging
     type: boolean
+  DeployIdentifier:
+    type: string
 
 resources:
   ExtraConfig:
@@ -46,6 +48,8 @@ resources:
       servers:  {get_param: servers}
       config: {get_resource: ExtraConfig}
       actions: ['CREATE','UPDATE']
+      input_values:
+        deploy_identifier: {get_param: DeployIdentifier}
 
   ExtraDeployments1:
     type: OS::Heat::SoftwareDeployments
@@ -53,3 +57,5 @@ resources:
       servers:  {get_param: servers}
       config: {get_resource: ExtraConfig1}
       actions: ['CREATE','UPDATE']
+      input_values:
+        deploy_identifier: {get_param: DeployIdentifier}
