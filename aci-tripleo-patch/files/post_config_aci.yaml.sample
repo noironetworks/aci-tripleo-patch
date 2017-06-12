@@ -3,3 +3,5 @@ resource_registry:
     OS::TripleO::Tasks::ControllerPostConfig: /opt/aci-tripleo-patch/puppet/apic_puppet.yaml
 parameter_defaults:
   ConfigDebug: True
+  DeployIdentifier: abc
+
